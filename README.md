@@ -5,15 +5,19 @@ This repo contains tools and instructions to generate
 automatically from [GitHub](https://github.com/) repositories in a similar
 fashion to [GitHub pages](https://pages.github.com/).
 
+Pages will appear on `https://pages.18f.us/$REPO-NAME`, where `$REPO-NAME` is
+the name of the site repository on https://github.com/18F/.
+
 ### Adding a new site
 
 In a nutshell, for each site repo:
 
-- `baseurl:` should be set to `/pages/$REPO-NAME`.
-- A webhook should be set for `https://hub.18f.us/deploy-pages`.
+- `baseurl:` should be set to `/$REPO-NAME`.
+- A webhook should be set for `https://pages.18f.us/deploy`.
 
-Then, someone with access to `hub.18f.us` needs to clone the site's repository
-on that server within the `$HOME/pages-repos` directory.
+Then, someone with access to `pages.18f.us` (same as `hub.18f.us` for now)
+needs to clone the site's repository on that server within the
+`$HOME/pages-repos` directory.
 
 ### Starting the webhook daemon
 
