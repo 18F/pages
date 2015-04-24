@@ -35,7 +35,7 @@ daemon using [Forever](https://www.npmjs.com/package/forever):
 
 Webhook:
 ```
-location /deploy-pages {
+location /deploy {
   proxy_pass http://localhost:5000/;
   proxy_http_version 1.1;
   proxy_redirect off;
@@ -54,7 +54,7 @@ location /deploy-pages {
 
 Pages:
 ```
-location /pages {
+location / {
   root   /home/ubuntu/pages-generated;
   index  index.html;
   default_type text/html;
