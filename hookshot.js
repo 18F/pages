@@ -16,7 +16,7 @@ if (!(port && home && rbenv)) {
 }
 
 var REPO_HOME = path.join(home, "pages-repos");
-var DEST_DIR = path.join(home, "pages-generated", "pages");
+var DEST_DIR = path.join(home, "pages-generated");
 var GIT = path.join("/", "usr", "bin", "git");
 var BUNDLER = path.join(rbenv, "shims", "bundle");
 var JEKYLL_ARGS = ["exec", "jekyll", "build", "--trace"];
