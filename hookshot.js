@@ -26,7 +26,6 @@ function SiteBuilder(repo_name, site_path, done_callback) {
   this.site_path = site_path;
   this.build_destination = path.join(DEST_DIR, repo_name);
   this.done = done_callback;
-  this.uses_bundler = fs.existsSync(path.join(site_path, "Gemfile"));
 
   var that = this;
   this.spawn = function(path, args, next) {
@@ -43,10 +42,45 @@ function SiteBuilder(repo_name, site_path, done_callback) {
   }
 }
 
+SiteBuilder.prototype.build = function() {
+  if (fs.existsSync(this.site_path)) {
+    this.sync_repo();
+  } else {
+    this.clone_repo();
+  }
+}
+
 SiteBuilder.prototype.sync_repo = function() {
+  console.log("syncing repo: " + this.repo_name);
+
   var that = this;
-  var next = this.uses_bundler ? "update_bundle" : "jekyll_build";
-  this.spawn(GIT, ["pull"], function() { that[next](); });
+  this.spawn(GIT, ["pull"], function() { that.check_for_bundler(); });
+}
+
+SiteBuilder.prototype.clone_repo = function() {
+  console.log("cloning", this.repo_name, "into", this.site_path);
+
+  var clone_addr = "git@github.com:18F/" + this.repo_name + ".git";
+  var clone_opts = {cwd: REPO_HOME, stdio: 'inherit'};
+  var that = this;
+
+  spawn(GIT, ["clone", clone_addr], clone_opts).on('close', function(code) {
+    if (code != 0) {
+      console.error("Error: failed to clone", that.repo_name,
+        "with exit code", code, "from command:", path, args.join(" "));
+    } else {
+      that.check_for_bundler();
+    }
+  });
+}
+
+SiteBuilder.prototype.check_for_bundler = function() {
+  this.uses_bundler = fs.existsSync(path.join(this.site_path, "Gemfile"));
+  if (this.uses_bundler) {
+    this.update_bundle();
+  } else {
+    this.jekyll_build();
+  }
 }
 
 SiteBuilder.prototype.update_bundle = function() {
@@ -68,16 +102,10 @@ SiteBuilder.prototype.jekyll_build = function() {
 hookshot('refs/heads/gh-pages', function(info) {
   var repo_name = info.repository.name;
   var site_path = path.join(REPO_HOME, repo_name);
-
-  if (!fs.existsSync(site_path)) {
-    console.error("could not find repo in " + REPO_HOME + ": " + repo_name);
-    return;
-  }
-  console.log("syncing repo: " + repo_name);
-
   var builder = new SiteBuilder(repo_name, site_path,
     function() { console.log("updated: " + repo_name); });
-  builder.sync_repo();
+
+  builder.build();
 }).listen(port);
 
 console.log("18F pages: listening on port " + port);
