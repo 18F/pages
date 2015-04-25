@@ -19,19 +19,50 @@ var REPO_HOME = path.join(home, "pages-repos");
 var DEST_DIR = path.join(home, "pages-generated");
 var GIT = path.join("/", "usr", "bin", "git");
 var BUNDLER = path.join(rbenv, "shims", "bundle");
-var JEKYLL_ARGS = ["exec", "jekyll", "build", "--trace"];
+var JEKYLL = path.join(rbenv, "shims", "jekyll");
 
-function spawn_cmd(repo_name, site_path, path, args, next) {
-  var opts = {cwd: site_path, stdio: 'inherit'}
-  var cmd = spawn(path, args, opts);
+function SiteBuilder(repo_name, site_path, done_callback) {
+  this.repo_name = repo_name;
+  this.site_path = site_path;
+  this.build_destination = path.join(DEST_DIR, repo_name);
+  this.done = done_callback;
+  this.uses_bundler = fs.existsSync(path.join(site_path, "Gemfile"));
 
-  cmd.on('close', function(code) {
-    if (code !== 0) {
-      console.error("failed to rebuild: " + repo_name);
-    } else {
-      next();
-    }
-  });
+  var that = this;
+  this.spawn = function(path, args, next) {
+    var opts = {cwd: that.site_path, stdio: 'inherit'};
+
+    spawn(path, args, opts).on('close', function(code) {
+      if (code !== 0) {
+        console.error("Error: rebuild failed for", that.repo_name,
+          "with exit code", code, "from command:", path, args.join(" "));
+      } else {
+        next();
+      }
+    });
+  }
+}
+
+SiteBuilder.prototype.sync_repo = function() {
+  var that = this;
+  var next = this.uses_bundler ? "update_bundle" : "jekyll_build";
+  this.spawn(GIT, ["pull"], function() { that[next](); });
+}
+
+SiteBuilder.prototype.update_bundle = function() {
+  var that = this;
+  this.spawn(BUNDLER, ["install"], function() { that.jekyll_build(); });
+}
+
+SiteBuilder.prototype.jekyll_build = function() {
+  var jekyll = JEKYLL;
+  var args = ["build", "--trace", "--destination", this.build_destination];
+
+  if (this.uses_bundler) {
+    jekyll = BUNDLER;
+    args = ["exec", "jekyll"].concat(args);
+  }
+  this.spawn(jekyll, args, this.done);
 }
 
 hookshot('refs/heads/gh-pages', function(info) {
@@ -44,13 +75,9 @@ hookshot('refs/heads/gh-pages', function(info) {
   }
   console.log("syncing repo: " + repo_name);
 
-  spawn_cmd(repo_name, site_path, GIT, ["pull"], function() {
-    spawn_cmd(repo_name, site_path, BUNDLER, ["install"], function() {
-      spawn_cmd(repo_name, site_path, BUNDLER,
-        JEKYLL_ARGS.concat(["--destination", path.join(DEST_DIR, repo_name)]),
-        function() { console.log("updated: " + repo_name); });
-    });
-  });
+  var builder = new SiteBuilder(repo_name, site_path,
+    function() { console.log("updated: " + repo_name); });
+  builder.sync_repo();
 }).listen(port);
 
 console.log("18F pages: listening on port " + port);
