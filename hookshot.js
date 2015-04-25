@@ -38,7 +38,7 @@ hookshot('refs/heads/gh-pages', function(info) {
   var repo_name = info.repository.name;
   var site_path = path.join(REPO_HOME, repo_name);
 
-  if (!(fs.existsSync(site_path))) {
+  if (!fs.existsSync(site_path)) {
     console.error("could not find repo in " + REPO_HOME + ": " + repo_name);
     return;
   }
