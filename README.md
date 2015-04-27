@@ -13,11 +13,9 @@ the name of the site repository on https://github.com/18F/.
 In a nutshell, for each site repo:
 
 - `baseurl:` should be set to `/$REPO-NAME`.
+- The default branch on GitHub should be set to `18f-pages`.
 - A webhook should be set for `https://pages.18f.us/deploy`.
-
-Then, someone with access to `pages.18f.us` (same as `hub.18f.us` for now)
-needs to clone the site's repository on that server within the
-`$HOME/pages-repos` directory.
+- Push a change to the `18f-pages` branch to publish your site.
 
 ### Starting the webhook daemon
 
@@ -30,6 +28,10 @@ daemon using [Forever](https://www.npmjs.com/package/forever):
 - Install [Fabric](http://www.fabfile.org/) via `pip install fabric`.
 - Launch the remote daemon by running `fab start` in the root directory of
   this repository.
+
+For grotty details on how to set up Hookshot, Fabric, and Forever, see [the
+18F Hub deploy/README
+instructions](https://github.com/18F/hub/tree/master/deploy#preparing-for-automated-deployment).
 
 ### Nginx config
 

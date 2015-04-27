@@ -99,7 +99,7 @@ SiteBuilder.prototype.jekyll_build = function() {
   this.spawn(jekyll, args, this.done);
 }
 
-hookshot('refs/heads/gh-pages', function(info) {
+hookshot('refs/heads/18f-pages', function(info) {
   var repo_name = info.repository.name;
   var site_path = path.join(REPO_HOME, repo_name);
   var builder = new SiteBuilder(repo_name, site_path,
