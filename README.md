@@ -10,11 +10,13 @@ the name of the site repository on https://github.com/18F/. The status of the
 most recent build attempt will be visible at
 `https://pages.18f.gov/$REPO-NAME/build.log`.
 
-### When to use this technique
+### Publishing to `pages.18f.gov`
+
+#### When to use this technique
 
 The one condition test: "Is this site going to be for public (non-18F) consumption? If yes, use pages.18F.gov."
 
-### Adding a new site
+#### Adding a new site
 
 In a nutshell, for each site repo:
 
@@ -35,7 +37,9 @@ For more complete instructions, see the [18F Guides
 Template](https://pages.18f.gov/guides-template/), especially the _Post Your
 Guide_ section.
 
-### Starting the webhook daemon
+### Administering `pages.18f.gov`
+
+#### Starting the webhook daemon
 
 To start the [Hookshot](https://www.npmjs.com/package/hookshot) server as a
 daemon using [Forever](https://www.npmjs.com/package/forever):
@@ -61,7 +65,7 @@ For grotty details on how to set up Hookshot, Fabric, and Forever, see [the
 18F Hub deploy/README
 instructions](https://github.com/18F/hub/tree/master/deploy#preparing-for-automated-deployment).
 
-### Nginx config
+#### Nginx config
 
 Webhook:
 ```
@@ -91,7 +95,7 @@ location / {
 }
 ```
 
-### Index page
+#### Index page
 
 `index.html` is currently maintained by hand and copied via:
 ```
