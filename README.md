@@ -6,7 +6,9 @@ automatically from [GitHub](https://github.com/) repositories in a similar
 fashion to [GitHub pages](https://pages.github.com/).
 
 Pages will appear on `https://pages.18f.gov/$REPO-NAME`, where `$REPO-NAME` is
-the name of the site repository on https://github.com/18F/.
+the name of the site repository on https://github.com/18F/. The status of the
+most recent build attempt will be visible at
+`https://pages.18f.gov/$REPO-NAME/build.log`.
 
 ### Adding a new site
 

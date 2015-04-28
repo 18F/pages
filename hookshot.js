@@ -21,20 +21,44 @@ var GIT = path.join("/", "usr", "bin", "git");
 var BUNDLER = path.join(rbenv, "shims", "bundle");
 var JEKYLL = path.join(rbenv, "shims", "jekyll");
 
-function SiteBuilder(repo_name, site_path, done_callback) {
+function BuildLogger(log_file_path) {
+  this.log_write = function(message) {
+    fs.appendFile(log_file_path, message + "\n", function(err) {
+      if (err !== null) {
+        console.error("Error: failed to append to log file",
+          log_file_path + ":", err);
+      }
+    });
+  }
+}
+
+BuildLogger.prototype.log = function() {
+  var message = Array.prototype.slice.call(arguments).join(' ');
+  console.log(message);
+  this.log_write(message);
+}
+
+BuildLogger.prototype.error = function() {
+  var message = Array.prototype.slice.call(arguments).join(' ');
+  console.error(message);
+  this.log_write(message);
+}
+
+function SiteBuilder(repo_name, site_path, build_logger, done_callback) {
   this.repo_name = repo_name;
   this.site_path = site_path;
+  this.logger = build_logger;
   this.build_destination = path.join(DEST_DIR, repo_name);
   this.done = done_callback;
 
-  var that = this;
   this.spawn = function(path, args, next) {
-    var opts = {cwd: that.site_path, stdio: 'inherit'};
+    var opts = {cwd: site_path, stdio: 'inherit'};
 
     spawn(path, args, opts).on('close', function(code) {
       if (code !== 0) {
-        console.error("Error: rebuild failed for", that.repo_name,
-          "with exit code", code, "from command:", path, args.join(" "));
+        done_callback("Error: rebuild failed for " + repo_name +
+          " with exit code " + code + " from command: " +
+          path + " " + args.join(" "))
       } else {
         next();
       }
@@ -51,14 +75,14 @@ SiteBuilder.prototype.build = function() {
 }
 
 SiteBuilder.prototype.sync_repo = function() {
-  console.log("syncing repo: " + this.repo_name);
+  this.logger.log("syncing repo: " + this.repo_name);
 
   var that = this;
   this.spawn(GIT, ["pull"], function() { that.check_for_bundler(); });
 }
 
 SiteBuilder.prototype.clone_repo = function() {
-  console.log("cloning", this.repo_name, "into", this.site_path);
+  this.logger.log("cloning", this.repo_name, "into", this.site_path);
 
   var clone_addr = "git@github.com:18F/" + this.repo_name + ".git";
   var clone_opts = {cwd: REPO_HOME, stdio: 'inherit'};
@@ -66,8 +90,9 @@ SiteBuilder.prototype.clone_repo = function() {
 
   spawn(GIT, ["clone", clone_addr], clone_opts).on('close', function(code) {
     if (code != 0) {
-      console.error("Error: failed to clone", that.repo_name,
-        "with exit code", code, "from command:", path, args.join(" "));
+      that.done("Error: failed to clone " + that.repo_name +
+        " with exit code " + code + " from command: "
+        + path + " " + args.join(" "));
     } else {
       that.check_for_bundler();
     }
@@ -96,15 +121,38 @@ SiteBuilder.prototype.jekyll_build = function() {
     jekyll = BUNDLER;
     args = ["exec", "jekyll"].concat(args);
   }
-  this.spawn(jekyll, args, this.done);
+  var that = this;
+  this.spawn(jekyll, args, function() { that.done(null); });
 }
 
 hookshot('refs/heads/18f-pages', function(info) {
   var repo_name = info.repository.name;
   var site_path = path.join(REPO_HOME, repo_name);
-  var builder = new SiteBuilder(repo_name, site_path,
-    function() { console.log("updated: " + repo_name); });
+  var commit = info.head_commit;
+  var build_log = site_path + '.log';
+  var logger = new BuildLogger(build_log);
+  logger.log(repo_name + ':', 'starting build at commit', commit.id);
+  logger.log('description:', commit.message);
+  logger.log('timestamp:', commit.timestamp);
+  logger.log('committer:', commit.committer.email);
 
+  var builder = new SiteBuilder(repo_name, site_path, logger,
+    function(err) {
+      if (err !== null) {
+        logger.error(err);
+        logger.error(repo_name + ': build failed');
+      } else {
+        logger.log(repo_name + ': build successful');
+      }
+
+      var new_log_path = path.join(DEST_DIR, repo_name, 'build.log');
+      fs.rename(build_log, new_log_path, function(err) {
+        if (err !== null) {
+          console.error('Error moving build log from', build_log, 'to',
+            new_log_path);
+        }
+      });
+    });
   builder.build();
 }).listen(port);
 
