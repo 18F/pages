@@ -5,17 +5,19 @@ This repo contains tools and instructions to generate
 automatically from [GitHub](https://github.com/) repositories in a similar
 fashion to [GitHub pages](https://pages.github.com/).
 
-Pages will appear on `https://pages.18f.us/$REPO-NAME`, where `$REPO-NAME` is
+Pages will appear on `https://pages.18f.gov/$REPO-NAME`, where `$REPO-NAME` is
 the name of the site repository on https://github.com/18F/.
 
 ### Adding a new site
 
 In a nutshell, for each site repo:
 
-- `baseurl:` should be set to `/$REPO-NAME`.
-- The default branch on GitHub should be set to `18f-pages`.
-- A webhook should be set for `https://pages.18f.us/deploy`.
+- In `_config.yml`, set `baseurl:` to `/$REPO-NAME`.
+- Set the default branch on GitHub to `18f-pages`.
+- Set a webhook for `https://pages.18f.gov/deploy`.
 - Push a change to the `18f-pages` branch to publish your site.
+
+For more complete instructions, see the [18F Guides Template](https://pages.18f.gov/guides-template/).
 
 ### Starting the webhook daemon
 
@@ -23,9 +25,9 @@ To start the [Hookshot](https://www.npmjs.com/package/hookshot) server as a
 daemon using [Forever](https://www.npmjs.com/package/forever):
 
 - Clone this repository on your local machine.
-- `ssh` to the remote host and clone this repository in `$HOME`.
-- Terminate your `ssh` session and install [pip](https://pip.pypa.io/).
+- Install [pip](https://pip.pypa.io/) if needed.
 - Install [Fabric](http://www.fabfile.org/) via `pip install fabric`.
+- `ssh` to the remote host and clone this repository in `$HOME`.
 - Launch the remote daemon by running `fab start` in the root directory of
   this repository.
 
