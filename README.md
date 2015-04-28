@@ -91,6 +91,13 @@ location / {
 }
 ```
 
+### Index page
+
+`index.html` is currently maintained by hand and copied via:
+```
+$ scp index.html 18f-pages:pages-generated/
+```
+
 ### Contributing
 
 1. Fork the repo (or just clone it if you're an 18F team member)
