@@ -19,11 +19,21 @@ The one condition test: "Is this site going to be for public (non-18F) consumpti
 In a nutshell, for each site repo:
 
 - In `_config.yml`, set `baseurl:` to `/$REPO-NAME`.
-- Set the default branch on GitHub to `18f-pages`.
+- Create an `18f-pages` branch. If you already have a `gh-pages` branch, you
+  can do this on the command line via:
+```
+$ git checkout -b 18f-pages gh-pages
+$ git push origin 18f-pages
+```
+- If your repo is primarily a Jekyll site (as opposed to a project site with
+  an `18f-pages` branch for documentation), you may optionally set the default
+  branch on GitHub to `18f-pages`.
 - Set a webhook for `https://pages.18f.gov/deploy`.
 - Push a change to the `18f-pages` branch to publish your site.
 
-For more complete instructions, see the [18F Guides Template](https://pages.18f.gov/guides-template/).
+For more complete instructions, see the [18F Guides
+Template](https://pages.18f.gov/guides-template/), especially the _Post Your
+Guide_ section.
 
 ### Starting the webhook daemon
 
