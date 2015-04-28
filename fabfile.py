@@ -8,7 +8,7 @@ INSTANCE = fabric.api.env.get('instance', 'internal')
 
 SETTINGS = {
   'internal': {
-    'host': '18f-hub', 'port': 5000, 'home': '/home/ubuntu',
+    'host': '18f-pages', 'port': 5000, 'home': '/home/ubuntu',
     'rbenv': '/usr/local/rbenv'
   },
 }[INSTANCE]

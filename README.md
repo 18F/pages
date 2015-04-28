@@ -27,7 +27,17 @@ daemon using [Forever](https://www.npmjs.com/package/forever):
 - Clone this repository on your local machine.
 - Install [pip](https://pip.pypa.io/) if needed.
 - Install [Fabric](http://www.fabfile.org/) via `pip install fabric`.
-- `ssh` to the remote host and clone this repository in `$HOME`.
+- Add the following stanza to `$HOME/.ssh/config`, replacing `$HOME` with the
+  full path to your home directory:
+```
+Host 18f-pages
+   Hostname pages.18f.gov
+   User ubuntu
+   IdentityFile $HOME/.ssh/id_rsa
+   IdentitiesOnly yes
+```
+- Run `ssh 18f-pages git clone git@github.com:18F/pages.git` to clone this
+  repository in the `$HOME` directory on `pages.18f.gov`.
 - Launch the remote daemon by running `fab start` in the root directory of
   this repository.
 
