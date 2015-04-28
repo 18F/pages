@@ -10,6 +10,10 @@ the name of the site repository on https://github.com/18F/. The status of the
 most recent build attempt will be visible at
 `https://pages.18f.gov/$REPO-NAME/build.log`.
 
+### When to use this technique
+
+The one condition test: "Is this site going to be for public (non-18F) consumption? If yes, use pages.18F.gov."
+
 ### Adding a new site
 
 In a nutshell, for each site repo:
