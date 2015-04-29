@@ -1,4 +1,15 @@
 #! /usr/bin/env node
+//
+// Webhook listener implementing https://pages.18f.gov/ publishing.
+//
+// The hookshot() call near the end sets up and launches the actual listener.
+//
+// For instructions on how to publish, see:
+// - https://github.com/18F/pages/
+// - https://pages.18f.gov/guides-template/
+//
+// Author: Mike Bland (michael.bland@gsa.gov)
+// Date:   2015-04-23
 
 var hookshot = require("hookshot");
 var fs = require("fs");
@@ -21,6 +32,7 @@ var GIT = path.join("/", "usr", "bin", "git");
 var BUNDLER = path.join(rbenv, "shims", "bundle");
 var JEKYLL = path.join(rbenv, "shims", "jekyll");
 
+// Message logger that logs both to the console and a repo-specific build.log.
 function BuildLogger(log_file_path) {
   this.log_write = function(message) {
     fs.appendFile(log_file_path, message + "\n", function(err) {
@@ -44,6 +56,19 @@ BuildLogger.prototype.error = function() {
   this.log_write(message);
 }
 
+// Executes the algorithm for cloning/syncing repos and publishing sites.
+// Patterned after the ControlFlow pattern used within Google.
+//
+// Once instantiated, users need only call build(), which is the entry point
+// to the algorithm. All other methods are "states" of the algorithm/state
+// machine that are executed asynchronously via callbacks.
+//
+// repo_name: name of the repo belonging to the 18F GitHub organization
+// site_path: path to the repo on the local machine
+// build_logger: BuildLogger instance
+// done_callback: callback triggered when the algorithm exits; takes a single
+//   `err` argument which will be nil on success, and an error string on
+//   failure
 function SiteBuilder(repo_name, site_path, build_logger, done_callback) {
   this.repo_name = repo_name;
   this.site_path = site_path;
@@ -145,6 +170,8 @@ hookshot('refs/heads/18f-pages', function(info) {
         logger.log(repo_name + ': build successful');
       }
 
+      // Provides https://pages.18f.gov/REPO-NAME/build.log as an indicator of
+      // latest status.
       var new_log_path = path.join(DEST_DIR, repo_name, 'build.log');
       fs.rename(build_log, new_log_path, function(err) {
         if (err !== null) {
