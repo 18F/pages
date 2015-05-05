@@ -30,7 +30,7 @@ $ git push origin 18f-pages
 - If your repo is primarily a Jekyll site (as opposed to a project site with
   an `18f-pages` branch for documentation), you may optionally set the default
   branch on GitHub to `18f-pages`.
-- Set a webhook for `https://pages.18f.gov/deploy`.
+- Set a webhook for `https://pages.18f.gov/deploy`.  When doing this using the [repo settings on github.com](https://github.com/18F/THE-NAME-OF-YOUR-REPO/settings/hooks/new), `https://pages.18f.gov/deploy` should be used for the Payload URL and the rest of the fields can stay with their defaults. 
 - Push a change to the `18f-pages` branch to publish your site.
 
 For more complete instructions, see the [18F Guides
