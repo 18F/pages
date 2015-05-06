@@ -110,10 +110,11 @@ SiteBuilder.prototype.clone_repo = function() {
   this.logger.log("cloning", this.repo_name, "into", this.site_path);
 
   var clone_addr = "git@github.com:18F/" + this.repo_name + ".git";
+  var clone_args = ["clone", clone_addr, "--branch", "18f-pages"];
   var clone_opts = {cwd: REPO_HOME, stdio: 'inherit'};
   var that = this;
 
-  spawn(GIT, ["clone", clone_addr], clone_opts).on('close', function(code) {
+  spawn(GIT, clone_args, clone_opts).on('close', function(code) {
     if (code != 0) {
       that.done("Error: failed to clone " + that.repo_name +
         " with exit code " + code + " from command: "
