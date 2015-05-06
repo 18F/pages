@@ -35,7 +35,7 @@ $ git push origin 18f-pages
 - _Optional_: Add your site's `title:` and `url:` (relative to
   `https://pages.18f.gov`, e.g. `/guides`) to the `sites:` list at the top of
   `index.html` in this repo. You can use the [GitHub editing
-  interface](https://github.com/18F/pages/edit/master/index.html) to do this.
+  interface](https://github.com/18F/pages/edit/18f-pages/index.html) to do this.
 
 For more complete instructions, see the [18F Guides
 Template](https://pages.18f.gov/guides-template/), especially the _Post Your
