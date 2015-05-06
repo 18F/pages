@@ -1,10 +1,17 @@
+---
+sites:
+- title: API Program
+  url: /api-program
+- title: Midas
+  url: /midas
+---
 <!DOCTYPE html>
 <html lang='en'>
 
   <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta charset="utf-8">
-  <title>Welcome to 18F Pages</title>
+  <title>Welcome to {{ site.name }}</title>
   <meta name="viewport" content="width=device-width">
   <link href='//fonts.googleapis.com/css?family=Raleway:400,700%7COpen+Sans:300,600' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="/guides-template/assets/css/main.css">
@@ -27,7 +34,7 @@
           
             <img class="logo" src="/guides-template/assets/img/18f-logo.png" alt="18F logo" width="75px">
           
-          <h1 class="site-title"><a class="title-link" href="/">18F Pages</a></h1>
+          <h1 class="site-title"><a class="title-link" href="{{ site.baseurl }}">{{ site.name }}</a></h1>
         </div>
         
       </header>
@@ -72,6 +79,14 @@
 
 <p>A <a href="/guides-template/">template for 18F Guides sites</a> that is also a complete 18F Guides publishing tutorial.</p>
 
+<h2>Other Sites</h2>
+
+<p>Other sites published here include:</p>
+
+<ul>{% for s in page.sites %}
+<li><a href="{{ s.url }}">{{ s.title }}</a></li>
+{% endfor %}</ul>
+
         </section>
 
       </div><!-- /.wrap content -->
@@ -93,7 +108,7 @@
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  ga('create', 'UA-48605964-19', 'gsa.gov');
+  ga('create', '{{ site.google_analytics_ua }}', 'gsa.gov');
 
   // anonymize user IPs (chops off the last IP triplet)
   ga('set', 'anonymizeIp', true);

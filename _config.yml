@@ -1,0 +1,14 @@
+baseurl: /
+markdown: redcarpet
+name: 18F Pages
+exclude:
+- Gemfile
+- Gemfile.lock
+- CONTRIBUTING.md
+- README.md
+- LICENSE.md
+- hookshot.js
+- fabfile.py
+- fabfile.pyc
+
+google_analytics_ua: UA-48605964-19
