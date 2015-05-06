@@ -101,10 +101,8 @@ location / {
 
 #### Index page
 
-`index.html` is currently maintained by hand and copied via:
-```
-$ scp index.html 18f-pages:pages-generated/
-```
+`pages-generated/index.html` is a symlink to
+`pages-generated/pages/index.html`.
 
 ### Contributing
 
