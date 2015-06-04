@@ -41,6 +41,11 @@ For more complete instructions, see the [18F Guides
 Template](https://pages.18f.gov/guides-template/), especially the _Post Your
 Guide_ section.
 
+#### Staging area
+
+Any changes pushed to a `18f-pages-staging` branch will appear on
+`https://pages-staging.18f.gov`, which requires authenticated access.
+
 ### Administering `pages.18f.gov`
 
 #### Starting the webhook daemon
@@ -71,6 +76,9 @@ instructions](https://github.com/18F/hub/tree/master/deploy#preparing-for-automa
 
 #### Nginx config
 
+The following excerpts are extacted from the [18F Hub nginx
+configuration](https://github.com/18F/hub/blob/master/deploy/etc/nginx/vhosts/pages.conf).
+
 Webhook:
 ```
 location /deploy {
@@ -90,10 +98,19 @@ location /deploy {
 }
 ```
 
-Pages:
+pages.18f.gov:
 ```
 location / {
   root   /home/ubuntu/pages-generated;
+  index  index.html;
+  default_type text/html;
+}
+```
+
+pages-staging.18f.gov:
+```
+location / {
+  alias  /home/ubuntu/pages-staging/;
   index  index.html;
   default_type text/html;
 }
