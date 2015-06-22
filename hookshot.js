@@ -193,7 +193,7 @@ function launch_builder(info, dest_dir, repo_dir) {
 }
 
 // Passed through to bodyParser.json().
-// See https://www.npmjs.com/package/bytes for `limit:` syntax.
+// https://www.npmjs.com/package/body-parser#limit
 var json_options = { limit: 1 << 20 };
 
 var webhook = hookshot('refs/heads/18f-pages', function(info) {
