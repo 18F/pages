@@ -122,7 +122,7 @@ SiteBuilder.prototype.clone_repo = function() {
     if (code != 0) {
       that.done("Error: failed to clone " + that.repo_name +
         " with exit code " + code + " from command: "
-        + path + " " + args.join(" "));
+        + GIT + " " + clone_args.join(" "));
     } else {
       that.check_for_bundler();
     }
@@ -162,10 +162,13 @@ function launch_builder(info, dest_dir, repo_dir) {
   var commit = info.head_commit;
   var build_log = site_path + '.log';
   var logger = new BuildLogger(build_log);
-  logger.log(repo_name + ':', 'starting build at commit', commit.id);
+  logger.log(info.repository.full_name + ':',
+    'starting build at commit', commit.id);
   logger.log('description:', commit.message);
   logger.log('timestamp:', commit.timestamp);
   logger.log('committer:', commit.committer.email);
+  logger.log('pusher:', info.pusher.name, info.pusher.email);
+  logger.log('sender:', info.sender.login);
 
   var builder = new SiteBuilder(repo_dir, repo_name, dest_dir, site_path,
     branch, logger, function(err) {
