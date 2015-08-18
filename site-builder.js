@@ -63,7 +63,7 @@ SiteBuilder.prototype.build = function() {
 };
 
 SiteBuilder.prototype.sync_repo = function() {
-  this.logger.log('syncing repo: ' + this.repo_name);
+  this.logger.log('syncing repo:', this.repo_name);
 
   var that = this;
   this.spawn(this.git, ['pull'], function() { that.check_for_bundler(); });
