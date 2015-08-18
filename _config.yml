@@ -10,6 +10,9 @@ exclude:
 - hookshot.js
 - fabfile.py
 - fabfile.pyc
+- gulpfile.js
+- node_modules
+- package.json
 
 navigation:
 - text: GitHub Repository
