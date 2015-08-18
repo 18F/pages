@@ -1,4 +1,6 @@
 #! /usr/bin/env node
+/* jshint node: true */
+/* jshint bitwise: false */
 //
 // Webhook listener implementing https://pages.18f.gov/ publishing.
 //
@@ -11,10 +13,10 @@
 // Author: Mike Bland (michael.bland@gsa.gov)
 // Date:   2015-04-23
 
-var hookshot = require("hookshot");
-var fs = require("fs");
+var hookshot = require('hookshot');
+var fs = require('fs');
 var path = require('path');
-var spawn = require("child_process").spawn;
+var spawn = require('child_process').spawn;
 var options = require('minimist')(process.argv.slice(2));
 
 var port = options.port;
@@ -22,37 +24,37 @@ var home = options.home;
 var rbenv = options.rbenv;
 
 if (!(port && home && rbenv)) {
-  console.error("--port, --home, and --rbenv are all required");
+  console.error('--port, --home, and --rbenv are all required');
   process.exit(1);
 }
 
-var GIT = path.join("/", "usr", "bin", "git");
-var BUNDLER = path.join(rbenv, "shims", "bundle");
-var JEKYLL = path.join(rbenv, "shims", "jekyll");
+var GIT = path.join('/', 'usr', 'bin', 'git');
+var BUNDLER = path.join(rbenv, 'shims', 'bundle');
+var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
 
 // Message logger that logs both to the console and a repo-specific build.log.
 function BuildLogger(log_file_path) {
   this.log_write = function(message) {
-    fs.appendFile(log_file_path, message + "\n", function(err) {
+    fs.appendFile(log_file_path, message + '\n', function(err) {
       if (err !== null) {
-        console.error("Error: failed to append to log file",
-          log_file_path + ":", err);
+        console.error('Error: failed to append to log file',
+          log_file_path + ':', err);
       }
     });
-  }
+  };
 }
 
 BuildLogger.prototype.log = function() {
   var message = Array.prototype.slice.call(arguments).join(' ');
   console.log(message);
   this.log_write(message);
-}
+};
 
 BuildLogger.prototype.error = function() {
   var message = Array.prototype.slice.call(arguments).join(' ');
   console.error(message);
   this.log_write(message);
-}
+};
 
 // Executes the algorithm for cloning/syncing repos and publishing sites.
 // Patterned after the ControlFlow pattern used within Google.
@@ -85,14 +87,14 @@ function SiteBuilder(repo_dir, repo_name, dest_dir, site_path, branch,
 
     spawn(path, args, opts).on('close', function(code) {
       if (code !== 0) {
-        done_callback("Error: rebuild failed for " + repo_name +
-          " with exit code " + code + " from command: " +
-          path + " " + args.join(" "))
+        done_callback('Error: rebuild failed for ' + repo_name +
+          ' with exit code ' + code + ' from command: ' +
+          path + ' ' + args.join(' '));
       } else {
         next();
       }
     });
-  }
+  };
 }
 
 SiteBuilder.prototype.build = function() {
@@ -101,59 +103,59 @@ SiteBuilder.prototype.build = function() {
   } else {
     this.clone_repo();
   }
-}
+};
 
 SiteBuilder.prototype.sync_repo = function() {
-  this.logger.log("syncing repo: " + this.repo_name);
+  this.logger.log('syncing repo: ' + this.repo_name);
 
   var that = this;
-  this.spawn(GIT, ["pull"], function() { that.check_for_bundler(); });
-}
+  this.spawn(GIT, ['pull'], function() { that.check_for_bundler(); });
+};
 
 SiteBuilder.prototype.clone_repo = function() {
-  this.logger.log("cloning", this.repo_name, "into", this.site_path);
+  this.logger.log('cloning', this.repo_name, 'into', this.site_path);
 
-  var clone_addr = "git@github.com:18F/" + this.repo_name + ".git";
-  var clone_args = ["clone", clone_addr, "--branch", this.branch];
+  var clone_addr = 'git@github.com:18F/' + this.repo_name + '.git';
+  var clone_args = ['clone', clone_addr, '--branch', this.branch];
   var clone_opts = {cwd: this.repo_dir, stdio: 'inherit'};
   var that = this;
 
   spawn(GIT, clone_args, clone_opts).on('close', function(code) {
-    if (code != 0) {
-      that.done("Error: failed to clone " + that.repo_name +
-        " with exit code " + code + " from command: "
-        + GIT + " " + clone_args.join(" "));
+    if (code !== 0) {
+      that.done('Error: failed to clone ' + that.repo_name +
+        ' with exit code ' + code + ' from command: ' +
+        GIT + ' ' + clone_args.join(' '));
     } else {
       that.check_for_bundler();
     }
   });
-}
+};
 
 SiteBuilder.prototype.check_for_bundler = function() {
-  this.uses_bundler = fs.existsSync(path.join(this.site_path, "Gemfile"));
+  this.uses_bundler = fs.existsSync(path.join(this.site_path, 'Gemfile'));
   if (this.uses_bundler) {
     this.update_bundle();
   } else {
     this.jekyll_build();
   }
-}
+};
 
 SiteBuilder.prototype.update_bundle = function() {
   var that = this;
-  this.spawn(BUNDLER, ["install"], function() { that.jekyll_build(); });
-}
+  this.spawn(BUNDLER, ['install'], function() { that.jekyll_build(); });
+};
 
 SiteBuilder.prototype.jekyll_build = function() {
   var jekyll = JEKYLL;
-  var args = ["build", "--trace", "--destination", this.build_destination];
+  var args = ['build', '--trace', '--destination', this.build_destination];
 
   if (this.uses_bundler) {
     jekyll = BUNDLER;
-    args = ["exec", "jekyll"].concat(args);
+    args = ['exec', 'jekyll'].concat(args);
   }
   var that = this;
   this.spawn(jekyll, args, function() { that.done(null); });
-}
+};
 
 function launch_builder(info, dest_dir, repo_dir) {
   var repo_name = info.repository.name;
@@ -198,16 +200,16 @@ var json_options = { limit: 1 << 20 };
 
 var webhook = hookshot('refs/heads/18f-pages', function(info) {
   launch_builder(info,
-    path.join(home, "pages-generated"),
-    path.join(home, "pages-repos"));
+    path.join(home, 'pages-generated'),
+    path.join(home, 'pages-repos'));
 }, json_options);
 
 webhook.on('refs/heads/18f-pages-staging', function(info) {
   launch_builder(info,
-    path.join(home, "pages-staging"),
-    path.join(home, "pages-repos-staging"));
+    path.join(home, 'pages-staging'),
+    path.join(home, 'pages-repos-staging'));
 }, json_options);
 
 webhook.listen(port);
 
-console.log("18F pages: listening on port " + port);
+console.log('18F pages: listening on port ' + port);
