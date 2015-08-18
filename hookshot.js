@@ -16,6 +16,7 @@
 var hookshot = require('hookshot');
 var fs = require('fs');
 var path = require('path');
+var build_logger = require('./build-logger');
 var spawn = require('child_process').spawn;
 var options = require('minimist')(process.argv.slice(2));
 
@@ -31,30 +32,6 @@ if (!(port && home && rbenv)) {
 var GIT = path.join('/', 'usr', 'bin', 'git');
 var BUNDLER = path.join(rbenv, 'shims', 'bundle');
 var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
-
-// Message logger that logs both to the console and a repo-specific build.log.
-function BuildLogger(log_file_path) {
-  this.log_write = function(message) {
-    fs.appendFile(log_file_path, message + '\n', function(err) {
-      if (err !== null) {
-        console.error('Error: failed to append to log file',
-          log_file_path + ':', err);
-      }
-    });
-  };
-}
-
-BuildLogger.prototype.log = function() {
-  var message = Array.prototype.slice.call(arguments).join(' ');
-  console.log(message);
-  this.log_write(message);
-};
-
-BuildLogger.prototype.error = function() {
-  var message = Array.prototype.slice.call(arguments).join(' ');
-  console.error(message);
-  this.log_write(message);
-};
 
 // Executes the algorithm for cloning/syncing repos and publishing sites.
 // Patterned after the ControlFlow pattern used within Google.
@@ -163,7 +140,7 @@ function launch_builder(info, dest_dir, repo_dir) {
   var site_path = path.join(repo_dir, repo_name);
   var commit = info.head_commit;
   var build_log = site_path + '.log';
-  var logger = new BuildLogger(build_log);
+  var logger = new build_logger.BuildLogger(build_log);
   logger.log(info.repository.full_name + ':',
     'starting build at commit', commit.id);
   logger.log('description:', commit.message);
