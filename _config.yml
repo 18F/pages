@@ -16,10 +16,10 @@ navigation:
   url: https://github.com/18F/pages/
   internal: false
 - text: 18F Guides
-  url: /guides/
+  url: guides
   internal: true
 - text: Guides Template
-  url: /guides-template/
+  url: guides-template
   internal: true
 
 google_analytics_ua: UA-48605964-19
