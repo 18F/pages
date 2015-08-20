@@ -21,7 +21,6 @@
   "homepage": "https://github.com/18F/pages#readme",
   "devDependencies": {
     "chai": "^3.2.0",
-    "chai-as-promised": "^5.1.0",
     "gulp": "^3.9.0",
     "gulp-jshint": "^1.11.2",
     "gulp-mocha": "^2.1.3",

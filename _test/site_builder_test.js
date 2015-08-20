@@ -6,7 +6,6 @@
 var fs = require('fs');
 var path = require('path');
 var chai = require('chai');
-var chai_as_promised = require('chai-as-promised');
 var sinon = require('sinon');
 var child_process = require('child_process');
 var mock_spawn = require('mock-spawn');
@@ -15,7 +14,6 @@ var build_logger = require('../build-logger');
 
 var expect = chai.expect;
 chai.should();
-chai.use(chai_as_promised);
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, log_mock, test_repo_dir, gemfile;
