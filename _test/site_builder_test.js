@@ -7,44 +7,44 @@ var fs = require('fs');
 var path = require('path');
 var chai = require('chai');
 var sinon = require('sinon');
-var child_process = require('child_process');
-var mock_spawn = require('mock-spawn');
-var site_builder = require('../site-builder');
-var build_logger = require('../build-logger');
+var childProcess = require('child_process');
+var mockSpawn = require('mock-spawn');
+var siteBuilder = require('../site-builder');
+var buildLogger = require('../build-logger');
 
 var expect = chai.expect;
 chai.should();
 
 describe('SiteBuilder', function() {
-  var builder, origSpawn, mySpawn, logger, log_mock, test_repo_dir, gemfile;
+  var builder, origSpawn, mySpawn, logger, logMock, testRepoDir, gemfile;
 
   before(function() {
-    test_repo_dir = path.resolve(__dirname, 'site_builder_test');
-    gemfile = path.resolve(test_repo_dir, 'Gemfile');
+    testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
+    gemfile = path.resolve(testRepoDir, 'Gemfile');
   });
 
   beforeEach(function() {
-    origSpawn = child_process.spawn;
-    mySpawn = mock_spawn();
-    child_process.spawn = mySpawn;
-    logger = new build_logger.BuildLogger('/dev/null');
-    log_mock = sinon.mock(logger);
+    origSpawn = childProcess.spawn;
+    mySpawn = mockSpawn();
+    childProcess.spawn = mySpawn;
+    logger = new buildLogger.BuildLogger('/dev/null');
+    logMock = sinon.mock(logger);
   });
 
   afterEach(function(done) {
-    child_process.spawn = origSpawn;
+    childProcess.spawn = origSpawn;
     fs.exists(gemfile, function(exists) {
       if (exists) { fs.unlink(gemfile, done); } else { done(); }
     });
   });
 
   after(function(done) {
-    fs.exists(test_repo_dir, function(exists) {
-      if (exists) { fs.rmdir(test_repo_dir, done); } else { done(); }
+    fs.exists(testRepoDir, function(exists) {
+      if (exists) { fs.rmdir(testRepoDir, done); } else { done(); }
     });
   });
 
-  var spawn_calls = function() {
+  var spawnCalls = function() {
     return mySpawn.calls.map(function(value) {
       return value.command + ' ' + value.args.join(' ');
     });
@@ -54,60 +54,60 @@ describe('SiteBuilder', function() {
     return function(err) { try { cb(err); done(); } catch (e) { done(e); } };
   };
 
-  var create_repo_dir = function(done) {
-    fs.mkdir(test_repo_dir, '0700', done);
+  var createRepoDir = function(done) {
+    fs.mkdir(testRepoDir, '0700', done);
   };
 
-  var create_repo_with_gemfile = function(done) {
-    create_repo_dir(function() { fs.writeFile(gemfile, '', done); });
+  var createRepoWithGemfile = function(done) {
+    createRepoDir(function() { fs.writeFile(gemfile, '', done); });
   };
 
-  var make_builder = function(site_path, done) {
-    return new site_builder.SiteBuilder('repo_dir', 'repo_name', 'dest_dir',
-      site_path, 'master', logger, 'git', 'bundle', 'jekyll', done);
+  var makeBuilder = function(sitePath, done) {
+    return new siteBuilder.SiteBuilder('repo_dir', 'repo_name', 'dest_dir',
+      sitePath, 'master', logger, 'git', 'bundle', 'jekyll', done);
   };
 
   it('should clone the repo if the directory does not exist', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
-    log_mock.expects('log').withExactArgs(
+    logMock.expects('log').withExactArgs(
         'cloning', 'repo_name', 'into', 'new_dir');
-    builder = make_builder('new_dir', check(done, function(err) {
+    builder = makeBuilder('new_dir', check(done, function(err) {
       expect(err).to.be.null;
-      expect(spawn_calls()).to.eql([
+      expect(spawnCalls()).to.eql([
         'git clone git@github.com:18F/repo_name.git --branch master',
         'jekyll build --trace --destination dest_dir/repo_name',
       ]);
-      log_mock.verify();
+      logMock.verify();
     }));
     builder.build();
   });
 
   it('should report an error if the clone fails', function(done) {
     mySpawn.sequence.add(mySpawn.simple(1));
-    log_mock.expects('log').withExactArgs(
+    logMock.expects('log').withExactArgs(
         'cloning', 'repo_name', 'into', 'new_dir');
-    builder = make_builder('new_dir', check(done, function(err) {
-      var clone_command = 
+    builder = makeBuilder('new_dir', check(done, function(err) {
+      var cloneCommand = 
         'git clone git@github.com:18F/repo_name.git --branch master';
       expect(err).to.equal('Error: failed to clone repo_name with ' +
-        'exit code 1 from command: ' + clone_command);
-      expect(spawn_calls()).to.eql([clone_command]);
-      log_mock.verify();
+        'exit code 1 from command: ' + cloneCommand);
+      expect(spawnCalls()).to.eql([cloneCommand]);
+      logMock.verify();
     }));
     builder.build();
   });
 
   it('should sync the repo if the directory already exists', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
-    log_mock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    create_repo_dir(function() {
-      builder = make_builder(test_repo_dir, check(done, function(err) {
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoDir(function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.null;
-        expect(spawn_calls()).to.eql([
+        expect(spawnCalls()).to.eql([
           'git pull',
           'jekyll build --trace --destination dest_dir/repo_name',
         ]);
-        log_mock.verify();
+        logMock.verify();
       }));
       builder.build();
     });
@@ -115,16 +115,16 @@ describe('SiteBuilder', function() {
 
   it ('should use bundler if a Gemfile is present', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
-    log_mock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    create_repo_with_gemfile(function() {
-      builder = make_builder(test_repo_dir, check(done, function(err) {
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoWithGemfile(function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.null;
-        expect(spawn_calls()).to.eql([
+        expect(spawnCalls()).to.eql([
           'git pull',
           'bundle install',
           'bundle exec jekyll build --trace --destination dest_dir/repo_name',
         ]);
-        log_mock.verify();
+        logMock.verify();
       }));
       builder.build();
     });
@@ -133,14 +133,14 @@ describe('SiteBuilder', function() {
   it ('should fail if bundle install fails', function(done) {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
-    log_mock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    create_repo_with_gemfile(function() {
-      builder = make_builder(test_repo_dir, check(done, function(err) {
-        var bundle_install_command = 'bundle install';
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoWithGemfile(function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
+        var bundleInstallCommand = 'bundle install';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
-          'exit code 1 from command: ' + bundle_install_command);
-        expect(spawn_calls()).to.eql(['git pull', bundle_install_command]);
-        log_mock.verify();
+          'exit code 1 from command: ' + bundleInstallCommand);
+        expect(spawnCalls()).to.eql(['git pull', bundleInstallCommand]);
+        logMock.verify();
       }));
       builder.build();
     });
@@ -150,16 +150,16 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
-    log_mock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    create_repo_with_gemfile(function() {
-      builder = make_builder(test_repo_dir, check(done, function(err) {
-        var jekyll_build_command =
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoWithGemfile(function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
+        var jekyllBuildCommand =
           'bundle exec jekyll build --trace --destination dest_dir/repo_name';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
-          'exit code 1 from command: ' + jekyll_build_command);
-        expect(spawn_calls()).to.eql([
-          'git pull', 'bundle install', jekyll_build_command]);
-        log_mock.verify();
+          'exit code 1 from command: ' + jekyllBuildCommand);
+        expect(spawnCalls()).to.eql([
+          'git pull', 'bundle install', jekyllBuildCommand]);
+        logMock.verify();
       }));
       builder.build();
     });

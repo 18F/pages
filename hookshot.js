@@ -15,7 +15,7 @@
 
 var hookshot = require('hookshot');
 var path = require('path');
-var site_builder = require('./site-builder');
+var siteBuilder = require('./site-builder');
 var options = require('minimist')(process.argv.slice(2));
 
 var port = options.port;
@@ -33,19 +33,19 @@ var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
 
 // Passed through to bodyParser.json().
 // https://www.npmjs.com/package/body-parser#limit
-var json_options = { limit: 1 << 20 };
+var jsonOptions = { limit: 1 << 20 };
 
 var webhook = hookshot('refs/heads/18f-pages', function(info) {
-  site_builder.launch_builder(info,
+  siteBuilder.launchBuilder(info,
     path.join(home, 'pages-generated'), path.join(home, 'pages-repos'),
     GIT, BUNDLER, JEKYLL);
-}, json_options);
+}, jsonOptions);
 
 webhook.on('refs/heads/18f-pages-staging', function(info) {
-  site_builder.launch_builder(info,
+  siteBuilder.launchBuilder(info,
     path.join(home, 'pages-staging'), path.join(home, 'pages-repos-staging'),
     GIT, BUNDLER, JEKYLL);
-}, json_options);
+}, jsonOptions);
 
 webhook.listen(port);
 

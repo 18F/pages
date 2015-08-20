@@ -5,8 +5,8 @@
 
 var fs = require('fs');
 var path = require('path');
-var build_logger = require('./build-logger');
-var child_process = require('child_process');
+var buildLogger = require('./build-logger');
+var childProcess = require('child_process');
 
 var exports = module.exports = {};
 
@@ -17,34 +17,34 @@ var exports = module.exports = {};
 // to the algorithm. All other methods are "states" of the algorithm/state
 // machine that are executed asynchronously via callbacks.
 //
-// repo_dir: directory containing locally-cloned Pages repositories
-// repo_name: name of the repo belonging to the 18F GitHub organization
-// dest_dir: path to the destination directory for published sites
-// site_path: path to the repo on the local machine
+// repoDir: directory containing locally-cloned Pages repositories
+// repoName: name of the repo belonging to the 18F GitHub organization
+// destDir: path to the destination directory for published sites
+// sitePath: path to the repo on the local machine
 // branch: the branch to publish
-// build_logger: BuildLogger instance
-// done_callback: callback triggered when the algorithm exits; takes a single
+// buildLogger: BuildLogger instance
+// doneCallback: callback triggered when the algorithm exits; takes a single
 //   `err` argument which will be nil on success, and an error string on
 //   failure
-function SiteBuilder(repo_dir, repo_name, dest_dir, site_path, branch,
-  build_logger, git, bundler, jekyll, done_callback) {
-  this.repo_dir = repo_dir;
-  this.repo_name = repo_name;
-  this.site_path = site_path;
+function SiteBuilder(repoDir, repoName, destDir, sitePath, branch,
+  buildLogger, git, bundler, jekyll, doneCallback) {
+  this.repoDir = repoDir;
+  this.repoName = repoName;
+  this.sitePath = sitePath;
   this.branch = branch;
-  this.logger = build_logger;
-  this.build_destination = path.join(dest_dir, repo_name);
+  this.logger = buildLogger;
+  this.buildDestination = path.join(destDir, repoName);
   this.git = git;
   this.bundler = bundler;
   this.jekyll = jekyll;
-  this.done = done_callback;
+  this.done = doneCallback;
 
   this.spawn = function(path, args, next) {
-    var opts = {cwd: site_path, stdio: 'inherit'};
+    var opts = {cwd: sitePath, stdio: 'inherit'};
 
-    child_process.spawn(path, args, opts).on('close', function(code) {
+    childProcess.spawn(path, args, opts).on('close', function(code) {
       if (code !== 0) {
-        done_callback('Error: rebuild failed for ' + repo_name +
+        doneCallback('Error: rebuild failed for ' + repoName +
           ' with exit code ' + code + ' from command: ' +
           path + ' ' + args.join(' '));
       } else {
@@ -55,59 +55,59 @@ function SiteBuilder(repo_dir, repo_name, dest_dir, site_path, branch,
 }
 
 SiteBuilder.prototype.build = function() {
-  if (fs.existsSync(this.site_path)) {
-    this.sync_repo();
+  if (fs.existsSync(this.sitePath)) {
+    this.syncRepo();
   } else {
-    this.clone_repo();
+    this.cloneRepo();
   }
 };
 
-SiteBuilder.prototype.sync_repo = function() {
-  this.logger.log('syncing repo:', this.repo_name);
+SiteBuilder.prototype.syncRepo = function() {
+  this.logger.log('syncing repo:', this.repoName);
 
   var that = this;
-  this.spawn(this.git, ['pull'], function() { that.check_for_bundler(); });
+  this.spawn(this.git, ['pull'], function() { that.checkForBundler(); });
 };
 
-SiteBuilder.prototype.clone_repo = function() {
-  this.logger.log('cloning', this.repo_name, 'into', this.site_path);
+SiteBuilder.prototype.cloneRepo = function() {
+  this.logger.log('cloning', this.repoName, 'into', this.sitePath);
 
-  var clone_addr = 'git@github.com:18F/' + this.repo_name + '.git';
-  var clone_args = ['clone', clone_addr, '--branch', this.branch];
-  var clone_opts = {cwd: this.repo_dir, stdio: 'inherit'};
+  var cloneAddr = 'git@github.com:18F/' + this.repoName + '.git';
+  var cloneArgs = ['clone', cloneAddr, '--branch', this.branch];
+  var cloneOpts = {cwd: this.repoDir, stdio: 'inherit'};
   var that = this;
 
-  child_process.spawn(this.git, clone_args, clone_opts)
+  childProcess.spawn(this.git, cloneArgs, cloneOpts)
     .on('close', function(code) {
     if (code !== 0) {
-      that.done('Error: failed to clone ' + that.repo_name +
+      that.done('Error: failed to clone ' + that.repoName +
         ' with exit code ' + code + ' from command: ' +
-        that.git + ' ' + clone_args.join(' '));
+        that.git + ' ' + cloneArgs.join(' '));
     } else {
-      that.check_for_bundler();
+      that.checkForBundler();
     }
   });
 };
 
-SiteBuilder.prototype.check_for_bundler = function() {
-  this.uses_bundler = fs.existsSync(path.join(this.site_path, 'Gemfile'));
-  if (this.uses_bundler) {
-    this.update_bundle();
+SiteBuilder.prototype.checkForBundler = function() {
+  this.usesBundler = fs.existsSync(path.join(this.sitePath, 'Gemfile'));
+  if (this.usesBundler) {
+    this.updateBundle();
   } else {
-    this.jekyll_build();
+    this.jekyllBuild();
   }
 };
 
-SiteBuilder.prototype.update_bundle = function() {
+SiteBuilder.prototype.updateBundle = function() {
   var that = this;
-  this.spawn(this.bundler, ['install'], function() { that.jekyll_build(); });
+  this.spawn(this.bundler, ['install'], function() { that.jekyllBuild(); });
 };
 
-SiteBuilder.prototype.jekyll_build = function() {
+SiteBuilder.prototype.jekyllBuild = function() {
   var jekyll = this.jekyll;
-  var args = ['build', '--trace', '--destination', this.build_destination];
+  var args = ['build', '--trace', '--destination', this.buildDestination];
 
-  if (this.uses_bundler) {
+  if (this.usesBundler) {
     jekyll = this.bundler;
     args = ['exec', 'jekyll'].concat(args);
   }
@@ -115,15 +115,15 @@ SiteBuilder.prototype.jekyll_build = function() {
   this.spawn(jekyll, args, function() { that.done(null); });
 };
 
-exports.launch_builder = function (info, dest_dir, repo_dir, git, bundler,
+exports.launchBuilder = function (info, destDir, repoDir, git, bundler,
   jekyll) {
-  var repo_name = info.repository.name;
+  var repoName = info.repository.name;
   var branch = info.ref.split('/').pop();
-  var site_path = path.join(repo_dir, repo_name);
-  var commit = info.head_commit;
-  var build_log = site_path + '.log';
-  var logger = new build_logger.BuildLogger(build_log);
-  logger.log(info.repository.full_name + ':',
+  var sitePath = path.join(repoDir, repoName);
+  var commit = info.headCommit;
+  var buildLog = sitePath + '.log';
+  var logger = new buildLogger.BuildLogger(buildLog);
+  logger.log(info.repository.fullName + ':',
     'starting build at commit', commit.id);
   logger.log('description:', commit.message);
   logger.log('timestamp:', commit.timestamp);
@@ -131,22 +131,22 @@ exports.launch_builder = function (info, dest_dir, repo_dir, git, bundler,
   logger.log('pusher:', info.pusher.name, info.pusher.email);
   logger.log('sender:', info.sender.login);
 
-  var builder = new SiteBuilder(repo_dir, repo_name, dest_dir, site_path,
+  var builder = new SiteBuilder(repoDir, repoName, destDir, sitePath,
     branch, logger, git, bundler, jekyll, function(err) {
       if (err !== null) {
         logger.error(err);
-        logger.error(repo_name + ': build failed');
+        logger.error(repoName + ': build failed');
       } else {
-        logger.log(repo_name + ': build successful');
+        logger.log(repoName + ': build successful');
       }
 
       // Provides https://pages.18f.gov/REPO-NAME/build.log as an indicator of
       // latest status.
-      var new_log_path = path.join(dest_dir, repo_name, 'build.log');
-      fs.rename(build_log, new_log_path, function(err) {
+      var newLogPath = path.join(destDir, repoName, 'build.log');
+      fs.rename(buildLog, newLogPath, function(err) {
         if (err !== null) {
-          console.error('Error moving build log from', build_log, 'to',
-            new_log_path);
+          console.error('Error moving build log from', buildLog, 'to',
+            newLogPath);
         }
       });
     });

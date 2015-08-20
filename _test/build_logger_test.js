@@ -7,60 +7,60 @@ var path = require('path');
 var fs = require('fs');
 var chai = require('chai');
 var sinon = require('sinon');
-var build_logger = require('../build-logger.js');
+var buildLogger = require('../build-logger.js');
 
 var expect = chai.expect;
 chai.should();
 
 describe('BuildLogger', function() {
-  var logger, log_file_dir, log_file_path;
+  var logger, logFileDir, logFilePath;
 
   before(function() {
-    log_file_dir = path.resolve(__dirname, 'build_logger_test');
-    log_file_path = path.resolve(log_file_dir, 'build.log');
+    logFileDir = path.resolve(__dirname, 'buildLogger_test');
+    logFilePath = path.resolve(logFileDir, 'build.log');
   });
 
   beforeEach(function(done) {
-    fs.exists(log_file_dir, function(exists) {
-      (exists ? fs.chmod : fs.mkdir)(log_file_dir, '0700', done);
+    fs.exists(logFileDir, function(exists) {
+      (exists ? fs.chmod : fs.mkdir)(logFileDir, '0700', done);
     });
   });
 
   afterEach(function(done) {
-    fs.exists(log_file_path, function(exists) {
-      if (exists) { fs.unlink(log_file_path, done); } else { done(); }
+    fs.exists(logFilePath, function(exists) {
+      if (exists) { fs.unlink(logFilePath, done); } else { done(); }
     });
   });
 
   after(function(done) {
-    fs.exists(log_file_dir, function(exists) {
-      if (exists) { fs.rmdir(log_file_dir, done); } else { done(); }
+    fs.exists(logFileDir, function(exists) {
+      if (exists) { fs.rmdir(logFileDir, done); } else { done(); }
     });
   });
 
-  var make_logger = function(done) {
-    return new build_logger.BuildLogger(log_file_path, done);
+  var makeLogger = function(done) {
+    return new buildLogger.BuildLogger(logFilePath, done);
   };
 
-  var capture_logs = function() {
+  var captureLogs = function() {
     sinon.stub(console, 'log').returns(void 0);
     sinon.stub(console, 'error').returns(void 0);
   };
 
-  var restore_logs = function() {
+  var restoreLogs = function() {
     console.error.restore();
     console.log.restore();
   };
 
-  var check_n = function(n, done, cb) {
+  var checkN = function(n, done, cb) {
     return function(err) {
       if (--n === 0) {
         try {
           cb(err);
-          restore_logs();
+          restoreLogs();
           done();
         } catch (e) {
-          restore_logs();
+          restoreLogs();
           done(e);
         }
       }
@@ -68,12 +68,12 @@ describe('BuildLogger', function() {
   };
 
   it ('should fail if the file cannot be written to', function(done) {
-    logger = make_logger(check_n(2, done, function() {
-      var expected_error = 'Error: EACCES, open \'' + log_file_path + '\'';
+    logger = makeLogger(checkN(2, done, function() {
+      var expectedError = 'Error: EACCES, open \'' + logFilePath + '\'';
       // I expected the following to succeed, since the failing call happens
       // after the successful call:
       //
-      // expect(err).to.equal(expected_error);
+      // expect(err).to.equal(expectedError);
       //
       // But here's the thing: It takes longer to flush the first, successful
       // call than it does to change the file permission and make the second 
@@ -81,20 +81,20 @@ describe('BuildLogger', function() {
       expect(console.log.called).to.be.true;
       expect(console.log.args[0].join(' '))
         .to.equal('This should be logged to the file');
-      expect(fs.readFileSync(log_file_path).toString())
+      expect(fs.readFileSync(logFilePath).toString())
         .to.equal('This should be logged to the file\n');
       expect(console.log.args[1].join(' '))
         .to.equal('This should not be logged to the file');
       expect(console.error.called).to.be.true;
       expect(console.error.args[0].join(' '))
-        .to.equal('Error: failed to append to log file ' + log_file_path +
-          ': ' + expected_error);
+        .to.equal('Error: failed to append to log file ' + logFilePath +
+          ': ' + expectedError);
     }));
 
-    capture_logs();
+    captureLogs();
     logger.log('This should be logged to the file');
 
-    fs.chmod(log_file_path, '400', function(err) {
+    fs.chmod(logFilePath, '400', function(err) {
       if (err) {
         done(err);
         return;
@@ -104,7 +104,7 @@ describe('BuildLogger', function() {
   });
 
   it('should log everything to the file', function(done) {
-    logger = make_logger(check_n(2, done, function(err) {
+    logger = makeLogger(checkN(2, done, function(err) {
       expect(err).to.be.null;
       expect(console.log.called).to.be.true;
       expect(console.log.args[0].join(' '))
@@ -112,11 +112,11 @@ describe('BuildLogger', function() {
       expect(console.error.called).to.be.true;
       expect(console.error.args[0].join(' '))
         .to.equal('This should also be logged to the file');
-      expect(fs.readFileSync(log_file_path).toString())
+      expect(fs.readFileSync(logFilePath).toString())
         .to.equal('This should be logged to the file\n' +
           'This should also be logged to the file\n');
     }));
-    capture_logs();
+    captureLogs();
     logger.log('This should be logged to the file');
     logger.error('This should also be logged to the file');
   });
