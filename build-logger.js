@@ -7,12 +7,15 @@ var fs = require('fs');
 var exports = module.exports = {};
 
 // Message logger that logs both to the console and a repo-specific build.log.
-function BuildLogger(log_file_path) {
+function BuildLogger(log_file_path, write_cb) {
   this.log_write = function(message) {
     fs.appendFile(log_file_path, message + '\n', function(err) {
       if (err !== null) {
         console.error('Error: failed to append to log file',
           log_file_path + ':', err);
+      }
+      if (write_cb !== undefined) {
+        write_cb(err);
       }
     });
   };
