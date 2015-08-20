@@ -35,16 +35,19 @@ var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
 // https://www.npmjs.com/package/body-parser#limit
 var jsonOptions = { limit: 1 << 20 };
 
+function SiteBuilderOptions(info, repoDir, destDir) {
+  return new SiteBuilderOptions(info, path.join(home, repoDir),
+    path.join(home, destDir), GIT, BUNDLER, JEKYLL);
+}
+
 var webhook = hookshot('refs/heads/18f-pages', function(info) {
   siteBuilder.launchBuilder(info,
-    path.join(home, 'pages-generated'), path.join(home, 'pages-repos'),
-    GIT, BUNDLER, JEKYLL);
+    new SiteBuilderOptions(info, 'pages-repos', 'pages-generated'));
 }, jsonOptions);
 
 webhook.on('refs/heads/18f-pages-staging', function(info) {
   siteBuilder.launchBuilder(info,
-    path.join(home, 'pages-staging'), path.join(home, 'pages-repos-staging'),
-    GIT, BUNDLER, JEKYLL);
+    new SiteBuilderOptions(info, 'pages-repos-staging', 'pages-staging'));
 }, jsonOptions);
 
 webhook.listen(port);

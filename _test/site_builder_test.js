@@ -63,8 +63,16 @@ describe('SiteBuilder', function() {
   };
 
   var makeBuilder = function(sitePath, done) {
-    return new siteBuilder.SiteBuilder('repo_dir', 'repo_name', 'dest_dir',
-      sitePath, 'master', logger, 'git', 'bundle', 'jekyll', done);
+    var info = {
+      repository: {
+        name: 'repo_name'
+      },
+      ref: 'refs/heads/18f-pages'
+    };
+    var opts = new siteBuilder.SiteBuilderOptions(info, 'repo_dir', 'dest_dir',
+      'git', 'bundle', 'jekyll');
+    opts.sitePath = sitePath;
+    return new siteBuilder.SiteBuilder(opts, logger, done);
   };
 
   it('should clone the repo if the directory does not exist', function(done) {
@@ -74,7 +82,7 @@ describe('SiteBuilder', function() {
     builder = makeBuilder('new_dir', check(done, function(err) {
       expect(err).to.be.null;
       expect(spawnCalls()).to.eql([
-        'git clone git@github.com:18F/repo_name.git --branch master',
+        'git clone git@github.com:18F/repo_name.git --branch 18f-pages',
         'jekyll build --trace --destination dest_dir/repo_name',
       ]);
       logMock.verify();
@@ -88,7 +96,7 @@ describe('SiteBuilder', function() {
         'cloning', 'repo_name', 'into', 'new_dir');
     builder = makeBuilder('new_dir', check(done, function(err) {
       var cloneCommand = 
-        'git clone git@github.com:18F/repo_name.git --branch master';
+        'git clone git@github.com:18F/repo_name.git --branch 18f-pages';
       expect(err).to.equal('Error: failed to clone repo_name with ' +
         'exit code 1 from command: ' + cloneCommand);
       expect(spawnCalls()).to.eql([cloneCommand]);

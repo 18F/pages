@@ -10,6 +10,33 @@ var childProcess = require('child_process');
 
 var exports = module.exports = {};
 
+// Creates an options object to pass to the SiteBuilder constructor
+//
+// Arguments:
+//   info: GitHub webhook payload
+//   repoDir: directory containing locally-cloned Pages repositories
+//   destDir: path to the destination directory for published sites
+//   sitePath: path to the repo on the local machine
+//   branch: the branch to publish
+//
+// With the exception of `info`, all of the arguments are added to the options
+// object, with these additional fields (computed from info):
+//   repoName: name of the repo belonging to the 18F GitHub organization
+//   sitePath: path to the repo of the specific Pages site being rebuilt
+//   branch: branch of the Pages repository to check out and rebuild
+function SiteBuilderOptions(info, repoDir, destDir, git, bundler, jekyll) {
+  return {
+    repoDir: repoDir,
+    repoName: info.repository.name,
+    sitePath: path.join(repoDir, info.repository.name),
+    branch: info.ref.split('/').pop(),
+    destDir: destDir,
+    git: git,
+    bundler: bundler,
+    jekyll: jekyll
+  };
+}
+
 // Executes the algorithm for cloning/syncing repos and publishing sites.
 // Patterned after the ControlFlow pattern used within Google.
 //
@@ -17,34 +44,30 @@ var exports = module.exports = {};
 // to the algorithm. All other methods are "states" of the algorithm/state
 // machine that are executed asynchronously via callbacks.
 //
-// repoDir: directory containing locally-cloned Pages repositories
-// repoName: name of the repo belonging to the 18F GitHub organization
-// destDir: path to the destination directory for published sites
-// sitePath: path to the repo on the local machine
-// branch: the branch to publish
+// opts: SiteBuilderOptions object
 // buildLogger: BuildLogger instance
 // doneCallback: callback triggered when the algorithm exits; takes a single
 //   `err` argument which will be nil on success, and an error string on
 //   failure
-function SiteBuilder(repoDir, repoName, destDir, sitePath, branch,
-  buildLogger, git, bundler, jekyll, doneCallback) {
-  this.repoDir = repoDir;
-  this.repoName = repoName;
-  this.sitePath = sitePath;
-  this.branch = branch;
+function SiteBuilder(opts, buildLogger, doneCallback) {
+  this.repoDir = opts.repoDir;
+  this.repoName = opts.repoName;
+  this.sitePath = opts.sitePath;
+  this.branch = opts.branch;
   this.logger = buildLogger;
-  this.buildDestination = path.join(destDir, repoName);
-  this.git = git;
-  this.bundler = bundler;
-  this.jekyll = jekyll;
+  this.buildDestination = path.join(opts.destDir, opts.repoName);
+  this.git = opts.git;
+  this.bundler = opts.bundler;
+  this.jekyll = opts.jekyll;
   this.done = doneCallback;
 
+  var that = this;
   this.spawn = function(path, args, next) {
-    var opts = {cwd: sitePath, stdio: 'inherit'};
+    var opts = {cwd: that.sitePath, stdio: 'inherit'};
 
     childProcess.spawn(path, args, opts).on('close', function(code) {
       if (code !== 0) {
-        doneCallback('Error: rebuild failed for ' + repoName +
+        that.done('Error: rebuild failed for ' + that.repoName +
           ' with exit code ' + code + ' from command: ' +
           path + ' ' + args.join(' '));
       } else {
@@ -115,13 +138,9 @@ SiteBuilder.prototype.jekyllBuild = function() {
   this.spawn(jekyll, args, function() { that.done(null); });
 };
 
-exports.launchBuilder = function (info, destDir, repoDir, git, bundler,
-  jekyll) {
-  var repoName = info.repository.name;
-  var branch = info.ref.split('/').pop();
-  var sitePath = path.join(repoDir, repoName);
+exports.launchBuilder = function (info, builderOpts) {
   var commit = info.headCommit;
-  var buildLog = sitePath + '.log';
+  var buildLog = builderOpts.sitePath + '.log';
   var logger = new buildLogger.BuildLogger(buildLog);
   logger.log(info.repository.fullName + ':',
     'starting build at commit', commit.id);
@@ -131,26 +150,27 @@ exports.launchBuilder = function (info, destDir, repoDir, git, bundler,
   logger.log('pusher:', info.pusher.name, info.pusher.email);
   logger.log('sender:', info.sender.login);
 
-  var builder = new SiteBuilder(repoDir, repoName, destDir, sitePath,
-    branch, logger, git, bundler, jekyll, function(err) {
-      if (err !== null) {
-        logger.error(err);
-        logger.error(repoName + ': build failed');
-      } else {
-        logger.log(repoName + ': build successful');
-      }
+  var builder = new SiteBuilder(builderOpts, logger, function(err) {
+    if (err !== null) {
+      logger.error(err);
+      logger.error(builderOpts.repoName + ': build failed');
+    } else {
+      logger.log(builderOpts.repoName + ': build successful');
+    }
 
-      // Provides https://pages.18f.gov/REPO-NAME/build.log as an indicator of
-      // latest status.
-      var newLogPath = path.join(destDir, repoName, 'build.log');
-      fs.rename(buildLog, newLogPath, function(err) {
-        if (err !== null) {
-          console.error('Error moving build log from', buildLog, 'to',
-            newLogPath);
-        }
-      });
+    // Provides https://pages.18f.gov/REPO-NAME/build.log as an indicator of
+    // latest status.
+    var newLogPath = path.join(
+      builderOpts.destDir, builderOpts.repoName, 'build.log');
+    fs.rename(buildLog, newLogPath, function(err) {
+      if (err !== null) {
+        console.error('Error moving build log from', buildLog, 'to',
+          newLogPath);
+      }
     });
+  });
   builder.build();
 };
 
+exports.SiteBuilderOptions = SiteBuilderOptions;
 exports.SiteBuilder = SiteBuilder;
