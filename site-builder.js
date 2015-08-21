@@ -24,7 +24,7 @@ var exports = module.exports = {};
 //   repoName: name of the repo belonging to the 18F GitHub organization
 //   sitePath: path to the repo of the specific Pages site being rebuilt
 //   branch: branch of the Pages repository to check out and rebuild
-function SiteBuilderOptions(info, repoDir, destDir, git, bundler, jekyll) {
+function Options(info, repoDir, destDir, git, bundler, jekyll) {
   return {
     repoDir: repoDir,
     repoName: info.repository.name,
@@ -44,7 +44,7 @@ function SiteBuilderOptions(info, repoDir, destDir, git, bundler, jekyll) {
 // to the algorithm. All other methods are "states" of the algorithm/state
 // machine that are executed asynchronously via callbacks.
 //
-// opts: SiteBuilderOptions object
+// opts: Options object
 // buildLogger: BuildLogger instance
 // doneCallback: callback triggered when the algorithm exits; takes a single
 //   `err` argument which will be nil on success, and an error string on
@@ -172,5 +172,5 @@ exports.launchBuilder = function (info, builderOpts) {
   builder.build();
 };
 
-exports.SiteBuilderOptions = SiteBuilderOptions;
+exports.Options = Options;
 exports.SiteBuilder = SiteBuilder;

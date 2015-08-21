@@ -36,7 +36,7 @@ var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
 var jsonOptions = { limit: 1 << 20 };
 
 function SiteBuilderOptions(info, repoDir, destDir) {
-  return new SiteBuilderOptions(info, path.join(home, repoDir),
+  return new siteBuilder.Options(info, path.join(home, repoDir),
     path.join(home, destDir), GIT, BUNDLER, JEKYLL);
 }
 
