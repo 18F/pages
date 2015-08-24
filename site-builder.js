@@ -62,34 +62,37 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
   this.done = doneCallback;
 
   var that = this;
-  this.spawn = function(path, args, next) {
-    var opts = {cwd: that.sitePath, stdio: 'inherit'};
+  this.spawn = function(path, args) {
+    return new Promise(function(resolve, reject) {
+      var opts = {cwd: that.sitePath, stdio: 'inherit'};
 
-    childProcess.spawn(path, args, opts).on('close', function(code) {
-      if (code !== 0) {
-        that.done('Error: rebuild failed for ' + that.repoName +
-          ' with exit code ' + code + ' from command: ' +
-          path + ' ' + args.join(' '));
-      } else {
-        next();
-      }
+      childProcess.spawn(path, args, opts).on('close', function(code) {
+        if (code !== 0) {
+          reject('Error: rebuild failed for ' + that.repoName +
+            ' with exit code ' + code + ' from command: ' +
+            path + ' ' + args.join(' '));
+        } else {
+          resolve();
+        }
+      });
     });
   };
 }
 
 SiteBuilder.prototype.build = function() {
-  if (fs.existsSync(this.sitePath)) {
-    this.syncRepo();
-  } else {
-    this.cloneRepo();
-  }
+  var that = this;
+  fs.exists(this.sitePath, function(exists) {
+    (exists === true ? that.syncRepo() : that.cloneRepo())
+      .then(function() { return that.checkForBundler(); })
+      .then(function(bundler) { if (bundler) { return that.updateBundle(); } })
+      .then(function() { return that.jekyllBuild(); })
+      .then(that.done, that.done);
+  });
 };
 
 SiteBuilder.prototype.syncRepo = function() {
   this.logger.log('syncing repo:', this.repoName);
-
-  var that = this;
-  this.spawn(this.git, ['pull'], function() { that.checkForBundler(); });
+  return this.spawn(this.git, ['pull']);
 };
 
 SiteBuilder.prototype.cloneRepo = function() {
@@ -100,30 +103,31 @@ SiteBuilder.prototype.cloneRepo = function() {
   var cloneOpts = {cwd: this.repoDir, stdio: 'inherit'};
   var that = this;
 
-  childProcess.spawn(this.git, cloneArgs, cloneOpts)
-    .on('close', function(code) {
-    if (code !== 0) {
-      that.done('Error: failed to clone ' + that.repoName +
-        ' with exit code ' + code + ' from command: ' +
-        that.git + ' ' + cloneArgs.join(' '));
-    } else {
-      that.checkForBundler();
-    }
+  return new Promise(function(resolve, reject) {
+    childProcess.spawn(that.git, cloneArgs, cloneOpts)
+      .on('close', function(code) {
+      if (code !== 0) {
+        reject('Error: failed to clone ' + that.repoName +
+          ' with exit code ' + code + ' from command: ' +
+          that.git + ' ' + cloneArgs.join(' '));
+      } else {
+        resolve();
+      }
+    });
   });
 };
 
 SiteBuilder.prototype.checkForBundler = function() {
-  this.usesBundler = fs.existsSync(path.join(this.sitePath, 'Gemfile'));
-  if (this.usesBundler) {
-    this.updateBundle();
-  } else {
-    this.jekyllBuild();
-  }
+  var that = this;
+  return new Promise(function(resolve) {
+    fs.exists(path.join(that.sitePath, 'Gemfile'), function(exists) {
+      resolve(that.usesBundler = exists);
+    });
+  });
 };
 
 SiteBuilder.prototype.updateBundle = function() {
-  var that = this;
-  this.spawn(this.bundler, ['install'], function() { that.jekyllBuild(); });
+  return this.spawn(this.bundler, ['install']);
 };
 
 SiteBuilder.prototype.jekyllBuild = function() {
@@ -134,8 +138,7 @@ SiteBuilder.prototype.jekyllBuild = function() {
     jekyll = this.bundler;
     args = ['exec', 'jekyll'].concat(args);
   }
-  var that = this;
-  this.spawn(jekyll, args, function() { that.done(null); });
+  return this.spawn(jekyll, args);
 };
 
 exports.launchBuilder = function (info, builderOpts) {
