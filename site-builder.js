@@ -10,6 +10,8 @@ var childProcess = require('child_process');
 
 var exports = module.exports = {};
 
+exports.PAGES_CONFIG = '_config_18f_pages.yml';
+
 // Creates an options object to pass to the SiteBuilder constructor
 //
 // Arguments:

@@ -17,11 +17,12 @@ chai.should();
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, logMock;
-  var testRepoDir, fileToDelete, gemfile;
+  var testRepoDir, fileToDelete, gemfile, pagesConfig;
 
   before(function() {
     testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
     gemfile = path.resolve(testRepoDir, 'Gemfile');
+    pagesConfig = path.resolve(testRepoDir, siteBuilder.PAGES_CONFIG);
   });
 
   beforeEach(function() {
@@ -179,4 +180,19 @@ describe('SiteBuilder', function() {
     });
   });
 
+  it('should not generate _config_18f_pages.yml if present', function(done) {
+    mySpawn.setDefault(mySpawn.simple(0));
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoWithFile(pagesConfig, function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
+        expect(err).to.be.undefined;
+        expect(spawnCalls()).to.eql([
+          'git pull',
+          'jekyll build --trace --destination dest_dir/repo_name',
+        ]);
+        logMock.verify();
+      }));
+      builder.build();
+    });
+  });
 });
