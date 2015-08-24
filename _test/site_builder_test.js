@@ -90,7 +90,8 @@ describe('SiteBuilder', function() {
       expect(err).to.be.undefined;
       expect(spawnCalls()).to.eql([
         'git clone git@github.com:18F/repo_name.git --branch 18f-pages',
-        'jekyll build --trace --destination dest_dir/repo_name',
+        'jekyll build --trace --destination dest_dir/repo_name ' +
+          '--config _config.yml,_config_18f_pages.yml',
       ]);
       logMock.verify();
     }));
@@ -120,7 +121,8 @@ describe('SiteBuilder', function() {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
-          'jekyll build --trace --destination dest_dir/repo_name',
+          'jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));
@@ -137,7 +139,8 @@ describe('SiteBuilder', function() {
         expect(spawnCalls()).to.eql([
           'git pull',
           'bundle install',
-          'bundle exec jekyll build --trace --destination dest_dir/repo_name',
+          'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));
@@ -169,7 +172,8 @@ describe('SiteBuilder', function() {
     createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var jekyllBuildCommand =
-          'bundle exec jekyll build --trace --destination dest_dir/repo_name';
+          'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + jekyllBuildCommand);
         expect(spawnCalls()).to.eql([
@@ -188,7 +192,8 @@ describe('SiteBuilder', function() {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
-          'jekyll build --trace --destination dest_dir/repo_name',
+          'jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));

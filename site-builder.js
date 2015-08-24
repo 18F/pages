@@ -134,7 +134,8 @@ SiteBuilder.prototype.updateBundle = function() {
 
 SiteBuilder.prototype.jekyllBuild = function() {
   var jekyll = this.jekyll;
-  var args = ['build', '--trace', '--destination', this.buildDestination];
+  var args = ['build', '--trace', '--destination', this.buildDestination,
+    '--config', '_config.yml,_config_18f_pages.yml'];
 
   if (this.usesBundler) {
     jekyll = this.bundler;
