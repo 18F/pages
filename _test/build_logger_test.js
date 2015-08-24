@@ -43,8 +43,8 @@ describe('BuildLogger', function() {
   };
 
   var captureLogs = function() {
-    sinon.stub(console, 'log').returns(void 0);
-    sinon.stub(console, 'error').returns(void 0);
+    sinon.stub(console, 'log').returns(0);
+    sinon.stub(console, 'error').returns(0);
   };
 
   var restoreLogs = function() {
