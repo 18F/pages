@@ -85,8 +85,8 @@ SiteBuilder.prototype.build = function() {
   var that = this;
   fs.exists(this.sitePath, function(exists) {
     (exists === true ? that.syncRepo() : that.cloneRepo())
-      .then(function() { return that.checkForBundler(); })
-      .then(function(bundler) { if (bundler) { return that.updateBundle(); } })
+      .then(function() { return that.checkForFile('Gemfile'); })
+      .then(function(usesBundler) { return that.updateBundle(usesBundler); })
       .then(function() { return that.jekyllBuild(); })
       .then(that.done, that.done);
   });
@@ -119,16 +119,18 @@ SiteBuilder.prototype.cloneRepo = function() {
   });
 };
 
-SiteBuilder.prototype.checkForBundler = function() {
+SiteBuilder.prototype.checkForFile = function(filePath) {
   var that = this;
   return new Promise(function(resolve) {
-    fs.exists(path.join(that.sitePath, 'Gemfile'), function(exists) {
-      resolve(that.usesBundler = exists);
-    });
+    fs.exists(path.join(that.sitePath, filePath), resolve);
   });
 };
 
-SiteBuilder.prototype.updateBundle = function() {
+SiteBuilder.prototype.updateBundle = function(usesBundler) {
+  if (!usesBundler) {
+    return;
+  }
+  this.usesBundler = usesBundler;
   return this.spawn(this.bundler, ['install']);
 };
 
