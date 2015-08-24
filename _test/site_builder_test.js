@@ -80,7 +80,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs(
         'cloning', 'repo_name', 'into', 'new_dir');
     builder = makeBuilder('new_dir', check(done, function(err) {
-      expect(err).to.be.null;
+      expect(err).to.be.undefined;
       expect(spawnCalls()).to.eql([
         'git clone git@github.com:18F/repo_name.git --branch 18f-pages',
         'jekyll build --trace --destination dest_dir/repo_name',
@@ -110,7 +110,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     createRepoDir(function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
-        expect(err).to.be.null;
+        expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
           'jekyll build --trace --destination dest_dir/repo_name',
@@ -126,7 +126,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     createRepoWithGemfile(function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
-        expect(err).to.be.null;
+        expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
           'bundle install',
