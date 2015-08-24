@@ -63,16 +63,18 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
 
   var that = this;
   this.spawn = function(path, args, next) {
-    var opts = {cwd: that.sitePath, stdio: 'inherit'};
+    return new Promise(function() {
+      var opts = {cwd: that.sitePath, stdio: 'inherit'};
 
-    childProcess.spawn(path, args, opts).on('close', function(code) {
-      if (code !== 0) {
-        that.done('Error: rebuild failed for ' + that.repoName +
-          ' with exit code ' + code + ' from command: ' +
-          path + ' ' + args.join(' '));
-      } else {
-        next();
-      }
+      childProcess.spawn(path, args, opts).on('close', function(code) {
+        if (code !== 0) {
+          that.done('Error: rebuild failed for ' + that.repoName +
+            ' with exit code ' + code + ' from command: ' +
+            path + ' ' + args.join(' '));
+        } else {
+          next();
+        }
+      });
     });
   };
 }
