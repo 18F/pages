@@ -154,7 +154,7 @@ exports.launchBuilder = function (info, builderOpts) {
   logger.log('sender:', info.sender.login);
 
   var builder = new SiteBuilder(builderOpts, logger, function(err) {
-    if (err !== null) {
+    if (err !== undefined) {
       logger.error(err);
       logger.error(builderOpts.repoName + ': build failed');
     } else {
