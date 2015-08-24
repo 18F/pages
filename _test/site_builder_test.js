@@ -16,7 +16,8 @@ var expect = chai.expect;
 chai.should();
 
 describe('SiteBuilder', function() {
-  var builder, origSpawn, mySpawn, logger, logMock, testRepoDir, gemfile;
+  var builder, origSpawn, mySpawn, logger, logMock;
+  var testRepoDir, fileToDelete, gemfile;
 
   before(function() {
     testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
@@ -32,9 +33,13 @@ describe('SiteBuilder', function() {
   });
 
   afterEach(function(done) {
+    if (fileToDelete === undefined) {
+      done();
+      return;
+    }
     childProcess.spawn = origSpawn;
-    fs.exists(gemfile, function(exists) {
-      if (exists) { fs.unlink(gemfile, done); } else { done(); }
+    fs.exists(fileToDelete, function(exists) {
+      if (exists) { fs.unlink(fileToDelete, done); } else { done(); }
     });
   });
 
@@ -58,8 +63,9 @@ describe('SiteBuilder', function() {
     fs.mkdir(testRepoDir, '0700', done);
   };
 
-  var createRepoWithGemfile = function(done) {
-    createRepoDir(function() { fs.writeFile(gemfile, '', done); });
+  var createRepoWithFile = function(filename, done) {
+    fileToDelete = filename;
+    createRepoDir(function() { fs.writeFile(filename, '', done); });
   };
 
   var makeBuilder = function(sitePath, done) {
@@ -124,7 +130,7 @@ describe('SiteBuilder', function() {
   it ('should use bundler if a Gemfile is present', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
@@ -142,7 +148,7 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var bundleInstallCommand = 'bundle install';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
@@ -159,7 +165,7 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var jekyllBuildCommand =
           'bundle exec jekyll build --trace --destination dest_dir/repo_name';
@@ -172,4 +178,5 @@ describe('SiteBuilder', function() {
       builder.build();
     });
   });
+
 });
