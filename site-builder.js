@@ -139,7 +139,7 @@ SiteBuilder.prototype.jekyllBuild = function() {
 };
 
 exports.launchBuilder = function (info, builderOpts) {
-  var commit = info.headCommit;
+  var commit = info.head_commit;
   var buildLog = builderOpts.sitePath + '.log';
   var logger = new buildLogger.BuildLogger(buildLog);
   logger.log(info.repository.fullName + ':',
