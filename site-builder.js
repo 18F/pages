@@ -78,11 +78,14 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
 }
 
 SiteBuilder.prototype.build = function() {
-  if (fs.existsSync(this.sitePath)) {
-    this.syncRepo();
-  } else {
-    this.cloneRepo();
-  }
+  var that = this;
+  fs.exists(this.sitePath, function(exists) {
+    if (exists) {
+      that.syncRepo();
+    } else {
+      that.cloneRepo();
+    }
+  });
 };
 
 SiteBuilder.prototype.syncRepo = function() {
@@ -113,12 +116,15 @@ SiteBuilder.prototype.cloneRepo = function() {
 };
 
 SiteBuilder.prototype.checkForBundler = function() {
-  this.usesBundler = fs.existsSync(path.join(this.sitePath, 'Gemfile'));
-  if (this.usesBundler) {
-    this.updateBundle();
-  } else {
-    this.jekyllBuild();
-  }
+  var that = this;
+  fs.exists(path.join(this.sitePath, 'Gemfile'), function(exists) {
+    that.usesBundler = exists;
+    if (that.usesBundler) {
+      that.updateBundle();
+    } else {
+      that.jekyllBuild();
+    }
+  });
 };
 
 SiteBuilder.prototype.updateBundle = function() {
