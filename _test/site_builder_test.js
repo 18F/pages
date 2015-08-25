@@ -6,6 +6,7 @@
 var fs = require('fs');
 var path = require('path');
 var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
 var sinon = require('sinon');
 var childProcess = require('child_process');
 var mockSpawn = require('mock-spawn');
@@ -14,6 +15,7 @@ var buildLogger = require('../build-logger');
 
 var expect = chai.expect;
 chai.should();
+chai.use(chaiAsPromised);
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, logMock;
@@ -123,11 +125,8 @@ describe('SiteBuilder', function() {
       logMock.verify();
     };
 
-    inRepoDir
-      .then(writeConfig)
-      .then(readConfig)
-      .then(checkResults)
-      .then(done, done);
+    inRepoDir.then(writeConfig).then(readConfig).then(checkResults)
+        .should.notify(done);
   });
 
   it('should clone the repo if the directory does not exist', function(done) {
