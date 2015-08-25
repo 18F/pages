@@ -6,6 +6,7 @@
 var fs = require('fs');
 var path = require('path');
 var chai = require('chai');
+var chaiAsPromised = require('chai-as-promised');
 var sinon = require('sinon');
 var childProcess = require('child_process');
 var mockSpawn = require('mock-spawn');
@@ -14,6 +15,7 @@ var buildLogger = require('../build-logger');
 
 var expect = chai.expect;
 chai.should();
+chai.use(chaiAsPromised);
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, logMock;
@@ -89,32 +91,42 @@ describe('SiteBuilder', function() {
   };
 
   it('should write the expected configuration', function(done) {
+    // Note the builder.done callback wrapper will remove the generated config.
+    builder = makeBuilder(testRepoDir, function() {});
     logMock.expects('log').withExactArgs(
       'generating', siteBuilder.PAGES_CONFIG);
+    logMock.expects('log').withExactArgs(
+      'removing generated', siteBuilder.PAGES_CONFIG);
 
-    createRepoDir(function() {
-      var configExists = false;
-      // Note the builder's done callback wrapper will delete the generated
-      // config.
-      builder = makeBuilder(testRepoDir, function(err) { done(err); });
-      builder.writeConfig(configExists).catch(done).then(function(err) {
-        expect(err).to.be.undefined;
-        expect(builder.generatedConfig).to.be.true;
-        logMock.verify();
-
-        var readConfig = new Promise(function(resolve, reject) {
-          fs.readFile(pagesConfig, function(err, data) {
-            if (err) { reject(err); } else { resolve(data.toString()); }
-          });
-        });
-
-        var checkContent = function(content) {
-          expect(content).to.equal('baseurl: /repo_name\n' +
-            'asset_root: ' + siteBuilder.ASSET_ROOT + '\n');
-        };
-        readConfig.then(checkContent).then(builder.done, builder.done);
+    var inRepoDir = new Promise(function(resolve, reject) {
+      createRepoDir(function(err) {
+        if (err) { reject(err); } else { resolve(); }
       });
     });
+
+    var writeConfig = function() {
+      var configExists;
+      return builder.writeConfig(configExists = false);
+    };
+
+    var readConfig = function() {
+      expect(builder.generatedConfig).to.be.true;
+      return new Promise(function(resolve, reject) {
+        fs.readFile(pagesConfig, function(err, data) {
+          if (err) { reject(err); } else { resolve(data.toString()); }
+        });
+      });
+    };
+
+    var checkResults = function(content) {
+      expect(content).to.equal('baseurl: /repo_name\n' +
+        'asset_root: ' + siteBuilder.ASSET_ROOT + '\n');
+      builder.done();
+      logMock.verify();
+    };
+
+    inRepoDir.then(writeConfig).then(readConfig).then(checkResults)
+        .should.notify(done);
   });
 
   it('should clone the repo if the directory does not exist', function(done) {
