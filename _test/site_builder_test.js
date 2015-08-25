@@ -16,11 +16,13 @@ var expect = chai.expect;
 chai.should();
 
 describe('SiteBuilder', function() {
-  var builder, origSpawn, mySpawn, logger, logMock, testRepoDir, gemfile;
+  var builder, origSpawn, mySpawn, logger, logMock;
+  var testRepoDir, fileToDelete, gemfile, pagesConfig;
 
   before(function() {
     testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
     gemfile = path.resolve(testRepoDir, 'Gemfile');
+    pagesConfig = path.resolve(testRepoDir, siteBuilder.PAGES_CONFIG);
   });
 
   beforeEach(function() {
@@ -33,15 +35,25 @@ describe('SiteBuilder', function() {
 
   afterEach(function(done) {
     childProcess.spawn = origSpawn;
-    fs.exists(gemfile, function(exists) {
-      if (exists) { fs.unlink(gemfile, done); } else { done(); }
-    });
-  });
 
-  after(function(done) {
-    fs.exists(testRepoDir, function(exists) {
-      if (exists) { fs.rmdir(testRepoDir, done); } else { done(); }
+    var removeFileToDelete = new Promise(function(resolve, reject) {
+      if (!fileToDelete) { return resolve(); }
+      fs.unlink(fileToDelete, function(err) {
+        if (err) { reject(err); } else { resolve(); }
+      });
     });
+
+    var removeRepoDir = function() {
+      return new Promise(function(resolve, reject) {
+        fs.exists(testRepoDir, function(exists) {
+          if (!exists) { return resolve(); }
+          fs.rmdir(testRepoDir, function(err) {
+            if (err) { reject(err); } else { resolve(); }
+          });
+        });
+      });
+    };
+    removeFileToDelete.then(removeRepoDir).then(done, done);
   });
 
   var spawnCalls = function() {
@@ -58,8 +70,9 @@ describe('SiteBuilder', function() {
     fs.mkdir(testRepoDir, '0700', done);
   };
 
-  var createRepoWithGemfile = function(done) {
-    createRepoDir(function() { fs.writeFile(gemfile, '', done); });
+  var createRepoWithFile = function(filename, done) {
+    fileToDelete = filename;
+    createRepoDir(function() { fs.writeFile(filename, '', done); });
   };
 
   var makeBuilder = function(sitePath, done) {
@@ -75,15 +88,53 @@ describe('SiteBuilder', function() {
     return new siteBuilder.SiteBuilder(opts, logger, done);
   };
 
+  it('should write the expected configuration', function(done) {
+    logMock.expects('log').withExactArgs(
+      'generating', siteBuilder.PAGES_CONFIG);
+
+    createRepoDir(function() {
+      var configExists = false;
+      // Note the builder's done callback wrapper will delete the generated
+      // config.
+      builder = makeBuilder(testRepoDir, function(err) { done(err); });
+      builder.writeConfig(configExists).catch(done).then(function(err) {
+        expect(err).to.be.undefined;
+        expect(builder.generatedConfig).to.be.true;
+        logMock.verify();
+
+        var readConfig = new Promise(function(resolve, reject) {
+          fs.readFile(pagesConfig, function(err, data) {
+            if (err) { reject(err); } else { resolve(data.toString()); }
+          });
+        });
+
+        var checkContent = function(content) {
+          expect(content).to.equal('baseurl: /repo_name\n' +
+            'asset_root: ' + siteBuilder.ASSET_ROOT + '\n');
+        };
+        readConfig.then(checkContent).then(builder.done, builder.done);
+      });
+    });
+  });
+
   it('should clone the repo if the directory does not exist', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
+    mySpawn.sequence.add(function(done) {
+      createRepoDir(function() { done(0); });
+    });
+
     logMock.expects('log').withExactArgs(
-        'cloning', 'repo_name', 'into', 'new_dir');
-    builder = makeBuilder('new_dir', check(done, function(err) {
+      'cloning', 'repo_name', 'into', testRepoDir);
+    logMock.expects('log').withExactArgs(
+      'generating', siteBuilder.PAGES_CONFIG);
+    logMock.expects('log').withExactArgs(
+      'removing generated', siteBuilder.PAGES_CONFIG);
+    builder = makeBuilder(testRepoDir, check(done, function(err) {
       expect(err).to.be.undefined;
       expect(spawnCalls()).to.eql([
         'git clone git@github.com:18F/repo_name.git --branch 18f-pages',
-        'jekyll build --trace --destination dest_dir/repo_name',
+        'jekyll build --trace --destination dest_dir/repo_name ' +
+          '--config _config.yml,_config_18f_pages.yml',
       ]);
       logMock.verify();
     }));
@@ -93,8 +144,8 @@ describe('SiteBuilder', function() {
   it('should report an error if the clone fails', function(done) {
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs(
-        'cloning', 'repo_name', 'into', 'new_dir');
-    builder = makeBuilder('new_dir', check(done, function(err) {
+      'cloning', 'repo_name', 'into', testRepoDir);
+    builder = makeBuilder(testRepoDir, check(done, function(err) {
       var cloneCommand = 
         'git clone git@github.com:18F/repo_name.git --branch 18f-pages';
       expect(err).to.equal('Error: failed to clone repo_name with ' +
@@ -108,12 +159,17 @@ describe('SiteBuilder', function() {
   it('should sync the repo if the directory already exists', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    logMock.expects('log').withExactArgs(
+      'generating', siteBuilder.PAGES_CONFIG);
+    logMock.expects('log').withExactArgs(
+      'removing generated', siteBuilder.PAGES_CONFIG);
     createRepoDir(function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
-          'jekyll build --trace --destination dest_dir/repo_name',
+          'jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));
@@ -124,13 +180,18 @@ describe('SiteBuilder', function() {
   it ('should use bundler if a Gemfile is present', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    logMock.expects('log').withExactArgs(
+      'generating', siteBuilder.PAGES_CONFIG);
+    logMock.expects('log').withExactArgs(
+      'removing generated', siteBuilder.PAGES_CONFIG);
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
           'bundle install',
-          'bundle exec jekyll build --trace --destination dest_dir/repo_name',
+          'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));
@@ -142,7 +203,7 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var bundleInstallCommand = 'bundle install';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
@@ -159,14 +220,38 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithGemfile(function() {
+    logMock.expects('log').withExactArgs(
+      'generating', siteBuilder.PAGES_CONFIG);
+    logMock.expects('log').withExactArgs(
+      'removing generated', siteBuilder.PAGES_CONFIG);
+    createRepoWithFile(gemfile, function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var jekyllBuildCommand =
-          'bundle exec jekyll build --trace --destination dest_dir/repo_name';
+          'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + jekyllBuildCommand);
         expect(spawnCalls()).to.eql([
           'git pull', 'bundle install', jekyllBuildCommand]);
+        logMock.verify();
+      }));
+      builder.build();
+    });
+  });
+
+  it('should not generate _config_18f_pages.yml if present', function(done) {
+    mySpawn.setDefault(mySpawn.simple(0));
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    logMock.expects('log').withExactArgs(
+      'using existing', siteBuilder.PAGES_CONFIG);
+    createRepoWithFile(pagesConfig, function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
+        expect(err).to.be.undefined;
+        expect(spawnCalls()).to.eql([
+          'git pull',
+          'jekyll build --trace --destination dest_dir/repo_name ' +
+            '--config _config.yml,_config_18f_pages.yml',
+        ]);
         logMock.verify();
       }));
       builder.build();
