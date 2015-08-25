@@ -12,6 +12,11 @@ var exports = module.exports = {};
 
 exports.PAGES_CONFIG = '_config_18f_pages.yml';
 
+// asset_root: is used by the guides_style_18f gem to ensure that updates to
+// common CSS and JavaScript files can be applied to 18F Pages without having
+// to update the gem.
+exports.ASSET_ROOT = '/guides-template';
+
 // Creates an options object to pass to the SiteBuilder constructor
 //
 // Arguments:
@@ -61,9 +66,24 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
   this.git = opts.git;
   this.bundler = opts.bundler;
   this.jekyll = opts.jekyll;
-  this.done = doneCallback;
 
   var that = this;
+
+  this.done = function(err) {
+    if (that.generatedConfig) {
+      that.logger.log('removing generated', exports.PAGES_CONFIG);
+      var configPath = path.join(that.sitePath, exports.PAGES_CONFIG);
+      fs.unlink(configPath, function(unlinkErr) {
+        if (unlinkErr) {
+          that.logger.log('error removing ' + configPath + ': ' + unlinkErr);
+        }
+        doneCallback(err);
+      });
+    } else {
+      doneCallback(err);
+    }
+  };
+
   this.spawn = function(path, args) {
     return new Promise(function(resolve, reject) {
       var opts = {cwd: that.sitePath, stdio: 'inherit'};
@@ -87,6 +107,8 @@ SiteBuilder.prototype.build = function() {
     (exists === true ? that.syncRepo() : that.cloneRepo())
       .then(function() { return that.checkForFile('Gemfile'); })
       .then(function(usesBundler) { return that.updateBundle(usesBundler); })
+      .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
+      .then(function(configExists) { return that.writeConfig(configExists); })
       .then(function() { return that.jekyllBuild(); })
       .then(that.done, that.done);
   });
@@ -132,6 +154,26 @@ SiteBuilder.prototype.updateBundle = function(usesBundler) {
   }
   this.usesBundler = usesBundler;
   return this.spawn(this.bundler, ['install']);
+};
+
+SiteBuilder.prototype.writeConfig = function(configExists) {
+  if (configExists) {
+    this.logger.log('using existing', exports.PAGES_CONFIG);
+    return;
+  }
+  this.logger.log('generating', exports.PAGES_CONFIG);
+
+  var that = this;
+  return new Promise(function(resolve, reject) {
+    var configPath = path.join(that.sitePath, exports.PAGES_CONFIG);
+    var content = 'baseurl: /' + that.repoName + '\n' +
+      'asset_root: ' + exports.ASSET_ROOT + '\n';
+    fs.writeFile(configPath, content, function(err) {
+      if (err) { return reject(err); }
+      that.generatedConfig = true;
+      resolve();
+    });
+  });
 };
 
 SiteBuilder.prototype.jekyllBuild = function() {
