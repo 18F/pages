@@ -116,7 +116,9 @@ SiteBuilder.prototype.build = function() {
 
 SiteBuilder.prototype.syncRepo = function() {
   this.logger.log('syncing repo:', this.repoName);
-  return this.spawn(this.git, ['pull']);
+  var that = this;
+  return this.spawn(this.git, ['pull'])
+    .then(function() { that.spawn(that.git, ['stash']); });
 };
 
 SiteBuilder.prototype.cloneRepo = function() {

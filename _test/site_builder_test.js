@@ -180,6 +180,7 @@ describe('SiteBuilder', function() {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
+          'git stash',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);
@@ -201,6 +202,7 @@ describe('SiteBuilder', function() {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
+          'git stash',
           'bundle install',
           'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
@@ -213,6 +215,7 @@ describe('SiteBuilder', function() {
 
   it ('should fail if bundle install fails', function(done) {
     mySpawn.sequence.add(mySpawn.simple(0));
+    mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     createRepoWithFile(gemfile, function() {
@@ -220,7 +223,8 @@ describe('SiteBuilder', function() {
         var bundleInstallCommand = 'bundle install';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + bundleInstallCommand);
-        expect(spawnCalls()).to.eql(['git pull', bundleInstallCommand]);
+        expect(spawnCalls()).to.eql([
+          'git pull', 'git stash', bundleInstallCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -228,6 +232,7 @@ describe('SiteBuilder', function() {
   });
 
   it ('should fail if jekyll build fails', function(done) {
+    mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
@@ -244,7 +249,7 @@ describe('SiteBuilder', function() {
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + jekyllBuildCommand);
         expect(spawnCalls()).to.eql([
-          'git pull', 'bundle install', jekyllBuildCommand]);
+          'git pull', 'git stash', 'bundle install', jekyllBuildCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -261,6 +266,7 @@ describe('SiteBuilder', function() {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
           'git pull',
+          'git stash',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);
