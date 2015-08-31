@@ -7,7 +7,7 @@ fabric.api.env.hosts = ['18f-pages']
 CMD = "pages/hookshot.js"
 
 def start():
-  fabric.api.run("forever start -l pages.log -a %s" % CMD)
+  fabric.api.run("forever start -l $HOME/pages.log -a %s" % CMD)
 
 def stop():
   fabric.api.run("forever stop %s" % CMD)
