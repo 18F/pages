@@ -12,44 +12,36 @@
 //
 // Author: Mike Bland (michael.bland@gsa.gov)
 // Date:   2015-04-23
+'use strict';
 
 var hookshot = require('hookshot');
 var path = require('path');
 var siteBuilder = require('./site-builder');
-var options = require('minimist')(process.argv.slice(2));
-
-var port = options.port;
-var home = options.home;
-var rbenv = options.rbenv;
-
-if (!(port && home && rbenv)) {
-  console.error('--port, --home, and --rbenv are all required');
-  process.exit(1);
-}
-
-var GIT = path.join('/', 'usr', 'bin', 'git');
-var BUNDLER = path.join(rbenv, 'shims', 'bundle');
-var JEKYLL = path.join(rbenv, 'shims', 'jekyll');
+var config = require('./pages-config.json');
 
 // Passed through to bodyParser.json().
 // https://www.npmjs.com/package/body-parser#limit
-var jsonOptions = { limit: 1 << 20 };
+var jsonOptions = { limit: config.payloadLimit };
 
 function SiteBuilderOptions(info, repoDir, destDir) {
-  return new siteBuilder.Options(info, path.join(home, repoDir),
-    path.join(home, destDir), GIT, BUNDLER, JEKYLL);
+  return new siteBuilder.Options(info, path.join(config.home, repoDir),
+    path.join(config.home, destDir), config.git, config.bundler, config.jekyll);
 }
 
-var webhook = hookshot('refs/heads/18f-pages', function(info) {
-  siteBuilder.launchBuilder(info,
-    new SiteBuilderOptions(info, 'pages-repos', 'pages-generated'));
-}, jsonOptions);
+var webhook = hookshot();
 
-webhook.on('refs/heads/18f-pages-staging', function(info) {
-  siteBuilder.launchBuilder(info,
-    new SiteBuilderOptions(info, 'pages-repos-staging', 'pages-staging'));
-}, jsonOptions);
+function makeBuilderListener(builder) {
+  webhook.on('refs/heads/' + builder.branch, function(info) {
+    siteBuilder.launchBuilder(info, new SiteBuilderOptions(
+      info, builder.repositoryDir, builder.generatedSiteDir));
+  }, jsonOptions);
+}
 
-webhook.listen(port);
+var numBuilders = config.builders.length;
+for (var i = 0; i != numBuilders; i++) {
+  makeBuilderListener(config.builders[i]);
+}
 
-console.log('18F pages: listening on port ' + port);
+webhook.listen(config.port);
+
+console.log('18F pages: listening on port ' + config.port);
