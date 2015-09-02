@@ -1,16 +1,26 @@
 ## 18F Pages
 
-This repo contains tools and instructions to generate
-[Jekyll](http://jekyllrb.com/)-based [18F](https://18f.gsa.gov/) sites
-automatically from [GitHub](https://github.com/) repositories in a similar
-fashion to [GitHub pages](https://pages.github.com/).
+[18F Pages](https://pages.18f.gov/) is the platform that
+[18F](https://18f.gsa.gov/) uses to prototype and publish many of its
+[Jekyll](http://jekyllrb.com/)-based web sites. It works very similarly to
+[GitHub pages](https://pages.github.com/).
+
+This repo contains both the Jekyll source for
+[https://pages.18f.gov/](https://pages.18f.gov/) and the
+[`pages.js`](./pages.js) server that acts as the publishing mechanism. The
+server may be forked and used by other organizations, as it is completely
+configurable via the [`pages-config.json`](#pages-config) file.
+
+### Publishing to `pages.18f.gov`
 
 Pages will appear on `https://pages.18f.gov/$REPO-NAME`, where `$REPO-NAME` is
 the name of the site repository on https://github.com/18F/. The status of the
 most recent build attempt will be visible at
 `https://pages.18f.gov/$REPO-NAME/build.log`.
 
-### Publishing to `pages.18f.gov`
+Other organizations may update the contents of
+[`pages-config.json`](#pages-config) to change the branch name, amongst
+other options.
 
 #### When to use this technique
 
@@ -120,6 +130,39 @@ location / {
 
 `pages-generated/index.html` is a symlink to
 `pages-generated/pages/index.html`.
+
+#### <a name="pages-config"></a>`pages-config.json` schema
+
+The [`pages-config.json`](./pages-config.json) configuration file contains the
+following settings:
+
+* **port**: the port on which the server will listen for webhooks
+* **home**: home directory of the user running the `pages.js` server
+* **git**:  path to `git` on the host machine
+* **bundler**: path to `bundle` on the host machine
+* **jekyll**:  path to `jekyll` on the host machine
+* **payloadLimit**: maximum allowable size (in bytes) for incoming webhooks
+* **githubOrg**: GitHub organization to which all published repositories
+  belong
+* **pagesConfig**: name of the Jekyll config file the server will generate to
+  set `baseurl:` and `asset_root:`
+* **assetRoot**: the value that the **pagesConfig** will contain for the
+  `asset_root:` configuration variable; see the [`guides_style_18f` gem's source
+  code](https://github.com/18F/guides-style) for how 18F Pages share common
+  style sheets and JavaScript files across 18F Pages sites, so that updates to
+  the theme are shared across all 18F Pages once they are pushed to the [18F
+  Guides Template](https://pages.18f.gov/guides-template/)
+* **builders**: a list of individual webhook listeners/document publishers;
+  each item contains:
+  * **branch**: the branch from which to read document updates
+  * **repositoryDir**: the directory on the host machine into which all
+    repositories will be cloned
+  * **generatedSiteDir**: the directory on the host machine into which all
+    sites will be generated
+
+The **builders** list allows us to run one server to publish both
+[https://pages.18f.gov/](https://pages.18f.gov/) and the authenticated
+[https://pages-staging.18f.gov/](https://pages-staging.18f.gov/).
 
 ### Contributing
 
