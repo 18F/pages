@@ -44,4 +44,4 @@ for (var i = 0; i != numBuilders; i++) {
 
 webhook.listen(config.port);
 
-console.log('18F pages: listening on port ' + config.port);
+console.log(config.githubOrg + ' pages: listening on port ' + config.port);
