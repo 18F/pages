@@ -38,7 +38,7 @@ def_command :update_js, 'Update JavaScript components' do
 end
 
 def_command :update_theme, 'Update the guides_style_18f gem' do
-  exec_cmd 'bundle update --source guides_style_18f'
+  exec({ 'RUBYOPT' => nil }, 'bundle', *%w(update --source guides_style_18f))
 end
 
 def_command :update_gems, 'Update Ruby gems' do |gems|
