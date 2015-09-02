@@ -4,8 +4,6 @@
 //
 // Webhook listener implementing https://pages.18f.gov/ publishing.
 //
-// The hookshot() call near the end sets up and launches the actual listener.
-//
 // For instructions on how to publish, see:
 // - https://github.com/18F/pages/
 // - https://pages.18f.gov/guides-template/
