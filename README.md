@@ -5,8 +5,7 @@
 [Jekyll](http://jekyllrb.com/)-based web sites. It works very similarly to
 [GitHub pages](https://pages.github.com/).
 
-This repo contains both the Jekyll source for
-[https://pages.18f.gov/](https://pages.18f.gov/) and the
+This repo contains both the Jekyll source for https://pages.18f.gov/ and the
 [`pages.js`](./pages.js) server that acts as the publishing mechanism. The
 server may be forked and used by other organizations, as it is completely
 configurable via the [`pages-config.json`](#pages-config) file.
@@ -161,8 +160,7 @@ following settings:
     sites will be generated
 
 The **builders** list allows us to run one server to publish both
-[https://pages.18f.gov/](https://pages.18f.gov/) and the authenticated
-[https://pages-staging.18f.gov/](https://pages-staging.18f.gov/).
+https://pages.18f.gov/ and the authenticated https://pages-staging.18f.gov/.
 
 ### Contributing
 
