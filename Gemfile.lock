@@ -13,6 +13,9 @@ GEM
     execjs (2.5.2)
     fast-stemmer (1.0.2)
     ffi (1.9.8)
+    go_script (0.1.4)
+      bundler (~> 1.10)
+      safe_yaml (~> 1.0)
     guides_style_18f (0.0.1)
       jekyll (~> 2.5)
       rouge (~> 1.9)
@@ -71,6 +74,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  go_script
   guides_style_18f
   jekyll
 
