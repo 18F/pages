@@ -5,6 +5,9 @@
   "bundler":      "/usr/local/rbenv/shims/bundle",
   "jekyll":       "/usr/local/rbenv/shims/jekyll",
   "payloadLimit": 1048576,
+  "githubOrg":    "18F",
+  "pagesConfig": "_config_18f_pages.yml",
+  "assetRoot":   "/guides-template",
   "builders": [
     {
       "branch":           "18f-pages",

@@ -1,4 +1,3 @@
-baseurl:
 markdown: redcarpet
 name: 18F Pages
 exclude:
@@ -31,10 +30,6 @@ repos:
 - name: 18F Pages
   description: 18F Pages GitHub repository
   url: https://github.com/18F/pages
-
-# To use the shared 18F Guides styles when deploying to pages.18f.gov,
-# uncomment the following; comment it out during local development:
-asset_root: /guides-template
 
 defaults:
   -

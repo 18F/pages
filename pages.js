@@ -4,8 +4,6 @@
 //
 // Webhook listener implementing https://pages.18f.gov/ publishing.
 //
-// The hookshot() call near the end sets up and launches the actual listener.
-//
 // For instructions on how to publish, see:
 // - https://github.com/18F/pages/
 // - https://pages.18f.gov/guides-template/
@@ -44,4 +42,4 @@ for (var i = 0; i != numBuilders; i++) {
 
 webhook.listen(config.port);
 
-console.log('18F pages: listening on port ' + config.port);
+console.log(config.githubOrg + ' pages: listening on port ' + config.port);

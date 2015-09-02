@@ -7,15 +7,16 @@ var fs = require('fs');
 var path = require('path');
 var buildLogger = require('./build-logger');
 var childProcess = require('child_process');
+var config = require('./pages-config.json');
 
 var exports = module.exports = {};
 
-exports.PAGES_CONFIG = '_config_18f_pages.yml';
+exports.PAGES_CONFIG = config.pagesConfig;
 
 // asset_root: is used by the guides_style_18f gem to ensure that updates to
-// common CSS and JavaScript files can be applied to 18F Pages without having
-// to update the gem.
-exports.ASSET_ROOT = '/guides-template';
+// common CSS and JavaScript files can be applied to Pages without having to
+// update the gem.
+exports.ASSET_ROOT = config.assetRoot;
 
 // Creates an options object to pass to the SiteBuilder constructor
 //
@@ -28,7 +29,7 @@ exports.ASSET_ROOT = '/guides-template';
 //
 // With the exception of `info`, all of the arguments are added to the options
 // object, with these additional fields (computed from info):
-//   repoName: name of the repo belonging to the 18F GitHub organization
+//   repoName: name of the repo belonging to the GitHub organization
 //   sitePath: path to the repo of the specific Pages site being rebuilt
 //   branch: branch of the Pages repository to check out and rebuild
 function Options(info, repoDir, destDir, git, bundler, jekyll) {
@@ -124,7 +125,8 @@ SiteBuilder.prototype.syncRepo = function() {
 SiteBuilder.prototype.cloneRepo = function() {
   this.logger.log('cloning', this.repoName, 'into', this.sitePath);
 
-  var cloneAddr = 'git@github.com:18F/' + this.repoName + '.git';
+  var cloneAddr = 'git@github.com:' + config.githubOrg + '/' +
+    this.repoName + '.git';
   var cloneArgs = ['clone', cloneAddr, '--branch', this.branch];
   var cloneOpts = {cwd: this.repoDir, stdio: 'inherit'};
   var that = this;
@@ -191,7 +193,7 @@ SiteBuilder.prototype.jekyllBuild = function() {
 };
 
 exports.launchBuilder = function (info, builderOpts) {
-  var commit = info.head_commit;
+  var commit = info.head_commit;  // jshint ignore:line
   var buildLog = builderOpts.sitePath + '.log';
   var logger = new buildLogger.BuildLogger(buildLog);
   logger.log(info.repository.fullName + ':',
