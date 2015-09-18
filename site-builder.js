@@ -106,13 +106,18 @@ SiteBuilder.prototype.build = function() {
   var that = this;
   fs.exists(this.sitePath, function(exists) {
     (exists === true ? that.syncRepo() : that.cloneRepo())
-      .then(function() { return that.checkForFile('Gemfile'); })
-      .then(function(usesBundler) { return that.updateBundle(usesBundler); })
-      .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
-      .then(function(configExists) { return that.writeConfig(configExists); })
-      .then(function() { return that.jekyllBuild(); })
+      .then(function() { return that._buildJekyll(); })
       .then(that.done, that.done);
   });
+};
+
+SiteBuilder.prototype._buildJekyll = function() {
+  var that = this;
+  return this.checkForFile('Gemfile')
+    .then(function(usesBundler) { return that.updateBundle(usesBundler); })
+    .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
+    .then(function(configExists) { return that.writeConfig(configExists); })
+    .then(function() { return that.jekyllBuild(); });
 };
 
 SiteBuilder.prototype.syncRepo = function() {
