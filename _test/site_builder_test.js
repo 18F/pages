@@ -179,8 +179,8 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);
@@ -201,8 +201,8 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'bundle install',
           'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
@@ -224,7 +224,7 @@ describe('SiteBuilder', function() {
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + bundleInstallCommand);
         expect(spawnCalls()).to.eql([
-          'git pull', 'git stash', bundleInstallCommand]);
+          'git stash', 'git pull', bundleInstallCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -249,7 +249,7 @@ describe('SiteBuilder', function() {
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + jekyllBuildCommand);
         expect(spawnCalls()).to.eql([
-          'git pull', 'git stash', 'bundle install', jekyllBuildCommand]);
+          'git stash', 'git pull', 'bundle install', jekyllBuildCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -265,8 +265,8 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);

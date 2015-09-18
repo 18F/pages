@@ -118,8 +118,8 @@ SiteBuilder.prototype.build = function() {
 SiteBuilder.prototype.syncRepo = function() {
   this.logger.log('syncing repo:', this.repoName);
   var that = this;
-  return this.spawn(this.git, ['pull'])
-    .then(function() { that.spawn(that.git, ['stash']); });
+  return this.spawn(this.git, ['stash'])
+    .then(function() { that.spawn(that.git, ['pull']); });
 };
 
 SiteBuilder.prototype.cloneRepo = function() {
