@@ -12,6 +12,7 @@ var childProcess = require('child_process');
 var mockSpawn = require('mock-spawn');
 var siteBuilder = require('../site-builder');
 var buildLogger = require('../build-logger');
+var fileLockedOperation = require('file-locked-operation');
 
 var expect = chai.expect;
 chai.should();
@@ -19,14 +20,20 @@ chai.use(chaiAsPromised);
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, logMock;
+  var lockDir, lockfilePath, updateLock;
   var testRepoDir, fileToDelete, gemfile, pagesConfig, configYml;
 
-  before(function() {
-    testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
+  before(function(done) {
+    testRepoDir = path.resolve(__dirname, 'site_builder_test');
     gemfile = path.resolve(testRepoDir, 'Gemfile');
     pagesConfig = path.resolve(testRepoDir, siteBuilder.PAGES_CONFIG);
     configYml = path.resolve(testRepoDir, '_config.yml');
+    lockDir = path.resolve(__dirname, 'site_builder_test_lock_dir');
+    lockfilePath = path.resolve(lockDir, '.update-lock-repo_name');
+    fs.mkdir(lockDir, '0700', done);
   });
+
+  after(function(done) { fs.rmdir(lockDir, done); });
 
   beforeEach(function() {
     origSpawn = childProcess.spawn;
@@ -34,6 +41,7 @@ describe('SiteBuilder', function() {
     childProcess.spawn = mySpawn;
     logger = new buildLogger.BuildLogger('/dev/null');
     logMock = sinon.mock(logger);
+    updateLock = new fileLockedOperation.FileLockedOperation(lockfilePath);
   });
 
   var removeFile = function(filename) {
@@ -101,7 +109,7 @@ describe('SiteBuilder', function() {
       'git', 'bundle', 'jekyll', 'rsync',
       ['-vaxp', '--delete', '--ignore-errors']);
     opts.sitePath = sitePath;
-    return new siteBuilder.SiteBuilder(opts, logger, done);
+    return new siteBuilder.SiteBuilder(opts, logger, updateLock, done);
   };
 
   it('should write the expected configuration', function(done) {

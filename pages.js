@@ -29,10 +29,10 @@ function SiteBuilderOptions(info, repoDir, destDir) {
 
 var webhook = hookshot();
 
-function makeBuilderListener(builder) {
-  webhook.on('refs/heads/' + builder.branch, function(info) {
+function makeBuilderListener(builderConfig) {
+  webhook.on('refs/heads/' + builderConfig.branch, function(info) {
     siteBuilder.launchBuilder(info, new SiteBuilderOptions(
-      info, builder.repositoryDir, builder.generatedSiteDir));
+      info, builderConfig.repositoryDir, builderConfig.generatedSiteDir));
   }, jsonOptions);
 }
 
