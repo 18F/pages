@@ -145,6 +145,8 @@ following settings:
 * **git**:  path to `git` on the host machine
 * **bundler**: path to `bundle` on the host machine
 * **jekyll**:  path to `jekyll` on the host machine
+* **rsync**: path to `rsync` on the host machine
+* **rsyncOpts**: options to pass to `rsync` that control Jekyll-less builds
 * **payloadLimit**: maximum allowable size (in bytes) for incoming webhooks
 * **githubOrg**: GitHub organization to which all published repositories
   belong
