@@ -220,7 +220,7 @@ exports.launchBuilder = function (info, builderOpts) {
   var commit = info.head_commit;  // jshint ignore:line
   var buildLog = builderOpts.sitePath + '.log';
   var logger = new buildLogger.BuildLogger(buildLog);
-  logger.log(info.repository.fullName + ':',
+  logger.log(info.repository.full_name + ':',   // jshint ignore:line
     'starting build at commit', commit.id);
   logger.log('description:', commit.message);
   logger.log('timestamp:', commit.timestamp);
