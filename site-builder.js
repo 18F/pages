@@ -25,14 +25,16 @@ exports.ASSET_ROOT = config.assetRoot;
 //   repoDir: directory containing locally-cloned Pages repositories
 //   destDir: path to the destination directory for published sites
 //   sitePath: path to the repo on the local machine
-//   branch: the branch to publish
+//   git, bundler, jekyll, rsync: path to system binaries
+//   rsyncOpts: options for the rsync binary
 //
 // With the exception of `info`, all of the arguments are added to the options
 // object, with these additional fields (computed from info):
 //   repoName: name of the repo belonging to the GitHub organization
 //   sitePath: path to the repo of the specific Pages site being rebuilt
 //   branch: branch of the Pages repository to check out and rebuild
-function Options(info, repoDir, destDir, git, bundler, jekyll) {
+function Options(info, repoDir, destDir, git, bundler, jekyll, rsync,
+  rsyncOpts) {
   return {
     repoDir: repoDir,
     repoName: info.repository.name,
@@ -41,7 +43,9 @@ function Options(info, repoDir, destDir, git, bundler, jekyll) {
     destDir: destDir,
     git: git,
     bundler: bundler,
-    jekyll: jekyll
+    jekyll: jekyll,
+    rsync: rsync,
+    rsyncOpts: rsyncOpts
   };
 }
 
@@ -67,6 +71,8 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
   this.git = opts.git;
   this.bundler = opts.bundler;
   this.jekyll = opts.jekyll;
+  this.rsync = opts.rsync;
+  this.rsyncOpts = opts.rsyncOpts;
 
   var that = this;
 
@@ -106,20 +112,33 @@ SiteBuilder.prototype.build = function() {
   var that = this;
   fs.exists(this.sitePath, function(exists) {
     (exists === true ? that.syncRepo() : that.cloneRepo())
-      .then(function() { return that.checkForFile('Gemfile'); })
-      .then(function(usesBundler) { return that.updateBundle(usesBundler); })
-      .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
-      .then(function(configExists) { return that.writeConfig(configExists); })
-      .then(function() { return that.jekyllBuild(); })
+      .then(function() { return that.checkForFile('_config.yml'); })
+      .then(function(useJekyll) {
+        return (useJekyll === true ? that._buildJekyll() : that._rsync());
+      })
       .then(that.done, that.done);
   });
+};
+
+SiteBuilder.prototype._rsync = function() {
+  return this.spawn(this.rsync,
+    this.rsyncOpts.concat(['./', this.buildDestination]));
+};
+
+SiteBuilder.prototype._buildJekyll = function() {
+  var that = this;
+  return this.checkForFile('Gemfile')
+    .then(function(usesBundler) { return that.updateBundle(usesBundler); })
+    .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
+    .then(function(configExists) { return that.writeConfig(configExists); })
+    .then(function() { return that.jekyllBuild(); });
 };
 
 SiteBuilder.prototype.syncRepo = function() {
   this.logger.log('syncing repo:', this.repoName);
   var that = this;
-  return this.spawn(this.git, ['pull'])
-    .then(function() { that.spawn(that.git, ['stash']); });
+  return this.spawn(this.git, ['stash'])
+    .then(function() { that.spawn(that.git, ['pull']); });
 };
 
 SiteBuilder.prototype.cloneRepo = function() {

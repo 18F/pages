@@ -23,7 +23,8 @@ var jsonOptions = { limit: config.payloadLimit };
 
 function SiteBuilderOptions(info, repoDir, destDir) {
   return new siteBuilder.Options(info, path.join(config.home, repoDir),
-    path.join(config.home, destDir), config.git, config.bundler, config.jekyll);
+    path.join(config.home, destDir), config.git, config.bundler, config.jekyll,
+    config.rsync, config.rsyncOpts);
 }
 
 var webhook = hookshot();

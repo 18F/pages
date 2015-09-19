@@ -19,12 +19,13 @@ chai.use(chaiAsPromised);
 
 describe('SiteBuilder', function() {
   var builder, origSpawn, mySpawn, logger, logMock;
-  var testRepoDir, fileToDelete, gemfile, pagesConfig;
+  var testRepoDir, fileToDelete, gemfile, pagesConfig, configYml;
 
   before(function() {
     testRepoDir = path.resolve(__dirname, 'siteBuilder_test');
     gemfile = path.resolve(testRepoDir, 'Gemfile');
     pagesConfig = path.resolve(testRepoDir, siteBuilder.PAGES_CONFIG);
+    configYml = path.resolve(testRepoDir, '_config.yml');
   });
 
   beforeEach(function() {
@@ -35,15 +36,22 @@ describe('SiteBuilder', function() {
     logMock = sinon.mock(logger);
   });
 
-  afterEach(function(done) {
-    childProcess.spawn = origSpawn;
-
-    var removeFileToDelete = new Promise(function(resolve, reject) {
-      if (!fileToDelete) { return resolve(); }
-      fs.unlink(fileToDelete, function(err) {
-        if (err) { reject(err); } else { resolve(); }
+  var removeFile = function(filename) {
+    if (!filename) { return Promise.resolve(); }
+    return new Promise(function(resolve, reject) {
+      fs.exists(filename, function(exists) {
+        if (exists) {
+          fs.unlink(filename, function(err) {
+            if (err) { reject(err); } else { resolve(); }
+          });
+        }
+        resolve();
       });
     });
+  };
+
+  afterEach(function(done) {
+    childProcess.spawn = origSpawn;
 
     var removeRepoDir = function() {
       return new Promise(function(resolve, reject) {
@@ -55,7 +63,10 @@ describe('SiteBuilder', function() {
         });
       });
     };
-    removeFileToDelete.then(removeRepoDir).then(done, done);
+    removeFile(configYml)
+      .then(function() { removeFile(fileToDelete); })
+      .then(removeRepoDir)
+      .then(done, done);
   });
 
   var spawnCalls = function() {
@@ -69,7 +80,9 @@ describe('SiteBuilder', function() {
   };
 
   var createRepoDir = function(done) {
-    fs.mkdir(testRepoDir, '0700', done);
+    fs.mkdir(testRepoDir, '0700', function() {
+      fs.writeFile(configYml, '', done);
+    });
   };
 
   var createRepoWithFile = function(filename, done) {
@@ -85,7 +98,8 @@ describe('SiteBuilder', function() {
       ref: 'refs/heads/18f-pages'
     };
     var opts = new siteBuilder.Options(info, 'repo_dir', 'dest_dir',
-      'git', 'bundle', 'jekyll');
+      'git', 'bundle', 'jekyll', 'rsync',
+      ['-vaxp', '--delete', '--ignore-errors']);
     opts.sitePath = sitePath;
     return new siteBuilder.SiteBuilder(opts, logger, done);
   };
@@ -179,8 +193,8 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);
@@ -201,8 +215,8 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'bundle install',
           'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
@@ -224,7 +238,7 @@ describe('SiteBuilder', function() {
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + bundleInstallCommand);
         expect(spawnCalls()).to.eql([
-          'git pull', 'git stash', bundleInstallCommand]);
+          'git stash', 'git pull', bundleInstallCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -249,7 +263,7 @@ describe('SiteBuilder', function() {
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
           'exit code 1 from command: ' + jekyllBuildCommand);
         expect(spawnCalls()).to.eql([
-          'git pull', 'git stash', 'bundle install', jekyllBuildCommand]);
+          'git stash', 'git pull', 'bundle install', jekyllBuildCommand]);
         logMock.verify();
       }));
       builder.build();
@@ -265,14 +279,34 @@ describe('SiteBuilder', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
-          'git pull',
           'git stash',
+          'git pull',
           'jekyll build --trace --destination dest_dir/repo_name ' +
             '--config _config.yml,_config_18f_pages.yml',
         ]);
         logMock.verify();
       }));
       builder.build();
+    });
+  });
+
+  it('should use rsync if _config.yml is not present', function(done) {
+    mySpawn.setDefault(mySpawn.simple(0));
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    createRepoWithFile(pagesConfig, function() {
+      removeFile(configYml)
+        .then(function() {
+          builder = makeBuilder(testRepoDir, check(done, function(err) {
+            expect(err).to.be.undefined;
+            expect(spawnCalls()).to.eql([
+              'git stash',
+              'git pull',
+              'rsync -vaxp --delete --ignore-errors ./ dest_dir/repo_name',
+            ]);
+            logMock.verify();
+          }));
+          builder.build();
+        });
     });
   });
 });
