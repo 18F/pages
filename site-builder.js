@@ -6,6 +6,7 @@
 var fs = require('fs');
 var path = require('path');
 var buildLogger = require('./build-logger');
+var fileLockedOperation = require('file-locked-operation');
 var childProcess = require('child_process');
 var config = require('./pages-config.json');
 
@@ -58,15 +59,17 @@ function Options(info, repoDir, destDir, git, bundler, jekyll, rsync,
 //
 // opts: Options object
 // buildLogger: BuildLogger instance
+// updateLock: FileLockedOperation instance
 // doneCallback: callback triggered when the algorithm exits; takes a single
 //   `err` argument which will be nil on success, and an error string on
 //   failure
-function SiteBuilder(opts, buildLogger, doneCallback) {
+function SiteBuilder(opts, buildLogger, updateLock, doneCallback) {
   this.repoDir = opts.repoDir;
   this.repoName = opts.repoName;
   this.sitePath = opts.sitePath;
   this.branch = opts.branch;
   this.logger = buildLogger;
+  this.updateLock = updateLock;
   this.buildDestination = path.join(opts.destDir, opts.repoName);
   this.git = opts.git;
   this.bundler = opts.bundler;
@@ -110,14 +113,16 @@ function SiteBuilder(opts, buildLogger, doneCallback) {
 
 SiteBuilder.prototype.build = function() {
   var that = this;
-  fs.exists(this.sitePath, function(exists) {
-    (exists === true ? that.syncRepo() : that.cloneRepo())
-      .then(function() { return that.checkForFile('_config.yml'); })
-      .then(function(useJekyll) {
-        return (useJekyll === true ? that._buildJekyll() : that._rsync());
-      })
-      .then(that.done, that.done);
-  });
+  this.updateLock.doLockedOperation(function(done) {
+    fs.exists(that.sitePath, function(exists) {
+      (exists ? that.syncRepo() : that.cloneRepo())
+        .then(function() { return that.checkForFile('_config.yml'); })
+        .then(function(useJekyll) {
+          return (useJekyll ? that._buildJekyll() : that._rsync());
+        })
+        .then(done, done);
+    });
+  }, this.done);
 };
 
 SiteBuilder.prototype._rsync = function() {
@@ -215,7 +220,7 @@ exports.launchBuilder = function (info, builderOpts) {
   var commit = info.head_commit;  // jshint ignore:line
   var buildLog = builderOpts.sitePath + '.log';
   var logger = new buildLogger.BuildLogger(buildLog);
-  logger.log(info.repository.fullName + ':',
+  logger.log(info.repository.full_name + ':',   // jshint ignore:line
     'starting build at commit', commit.id);
   logger.log('description:', commit.message);
   logger.log('timestamp:', commit.timestamp);
@@ -223,7 +228,10 @@ exports.launchBuilder = function (info, builderOpts) {
   logger.log('pusher:', info.pusher.name, info.pusher.email);
   logger.log('sender:', info.sender.login);
 
-  var builder = new SiteBuilder(builderOpts, logger, function(err) {
+  var lockfilePath = path.join(builderOpts.destDir,
+    '.update-lock-' + builderOpts.repoName);
+  var updateLock = new fileLockedOperation.FileLockedOperation(lockfilePath);
+  var builder = new SiteBuilder(builderOpts, logger, updateLock, function(err) {
     if (err !== undefined) {
       logger.error(err);
       logger.error(builderOpts.repoName + ': build failed');
