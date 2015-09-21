@@ -115,10 +115,10 @@ SiteBuilder.prototype.build = function() {
   var that = this;
   this.updateLock.doLockedOperation(function(done) {
     fs.exists(that.sitePath, function(exists) {
-      (exists === true ? that.syncRepo() : that.cloneRepo())
+      (exists ? that.syncRepo() : that.cloneRepo())
         .then(function() { return that.checkForFile('_config.yml'); })
         .then(function(useJekyll) {
-          return (useJekyll === true ? that._buildJekyll() : that._rsync());
+          return (useJekyll ? that._buildJekyll() : that._rsync());
         })
         .then(done, done);
     });
