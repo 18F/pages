@@ -151,6 +151,52 @@ describe('SiteBuilder', function() {
         .should.notify(done);
   });
 
+  // Note that this internal function will only get called when a
+  // _config_18f_pages.yml file is present, not generated. Otherwise the
+  // server will generate this file, and the baseurl will match the output
+  // directory already.
+  describe('_parseDestinationFromConfigData', function() {
+    beforeEach(function() {
+      builder = makeBuilder(testRepoDir, function() { });
+    });
+
+    it('should keep the default destination if undefined', function() {
+      builder._parseDestinationFromConfigData('');
+      expect(builder.buildDestination).to.equal('dest_dir/repo_name');
+    });
+
+    it('should keep the default destination if empty', function() {
+      builder._parseDestinationFromConfigData('baseurl:\n');
+      expect(builder.buildDestination).to.equal('dest_dir/repo_name');
+    });
+
+    it('should keep the default destination if empty with spaces', function() {
+      builder._parseDestinationFromConfigData('baseurl:   \n');
+      expect(builder.buildDestination).to.equal('dest_dir/repo_name');
+    });
+
+    it('should keep the default destination if set to root path', function() {
+      builder._parseDestinationFromConfigData('baseurl: /\n');
+      expect(builder.buildDestination).to.equal('dest_dir/repo_name');
+    });
+
+    it('should set the destination from config data baseurl', function() {
+      builder._parseDestinationFromConfigData('baseurl: /new-destination\n');
+      expect(builder.buildDestination).to.equal('dest_dir/new-destination');
+    });
+
+    it('should parse baseurl if no leading space', function() {
+      builder._parseDestinationFromConfigData('baseurl:/new-destination\n');
+      expect(builder.buildDestination).to.equal('dest_dir/new-destination');
+    });
+
+    it('should trim all spaces around baseurl', function() {
+      builder._parseDestinationFromConfigData(
+        'baseurl:   /new-destination   \n');
+      expect(builder.buildDestination).to.equal('dest_dir/new-destination');
+    });
+  });
+
   it('should clone the repo if the directory does not exist', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     mySpawn.sequence.add(function(done) {
@@ -283,7 +329,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     logMock.expects('log').withExactArgs(
       'using existing', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(pagesConfig, 'baseurl:', function() {
+    createRepoWithFile(pagesConfig, '', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
