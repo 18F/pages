@@ -152,6 +152,10 @@ following settings:
   belong
 * **pagesConfig**: name of the Jekyll config file the server will generate to
   set `baseurl:` and `asset_root:`
+* **fileLockWaitTime**: max time for an incoming build request to wait for the
+  lock file, in milliseconds
+* **fileLockPollTime**: max interval for an incoming build request to poll for
+  the lock file, in milliseconds
 * **assetRoot**: the value that the **pagesConfig** will contain for the
   `asset_root:` configuration variable; see the [`guides_style_18f` gem's source
   code](https://github.com/18F/guides-style) for how 18F Pages share common
