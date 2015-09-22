@@ -283,7 +283,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     logMock.expects('log').withExactArgs(
       'using existing', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(pagesConfig, '', function() {
+    createRepoWithFile(pagesConfig, 'baseurl:  ', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
@@ -303,7 +303,7 @@ describe('SiteBuilder', function() {
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     logMock.expects('log').withExactArgs(
       'using existing', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(pagesConfig, 'baseurl: /new-destination', function() {
+    createRepoWithFile(pagesConfig, 'baseurl:  /new-destination  ', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([

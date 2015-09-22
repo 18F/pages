@@ -194,9 +194,10 @@ SiteBuilder.prototype.readOrWriteConfig = function(configExists) {
     return new Promise(function(resolve, reject) {
       fs.readFile(configPath, 'utf8', function(err, data) {
         if (err) { return reject(err); }
-        var baseurl = data.match(/baseurl: *\/(.+)/m);
-        if (baseurl) {
-          that.buildDestination = path.join(that.destDir, baseurl[1].trim());
+        var baseurl_match = data.match(/^baseurl:(.+)$/m);
+        if (baseurl_match) {
+          var newDest = path.join(that.destDir, baseurl_match[1].trim());
+          if (newDest !== that.destDir) { that.buildDestination = newDest; }
         }
         resolve();
       });
