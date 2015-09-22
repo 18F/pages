@@ -70,6 +70,7 @@ function SiteBuilder(opts, buildLogger, updateLock, doneCallback) {
   this.branch = opts.branch;
   this.logger = buildLogger;
   this.updateLock = updateLock;
+  this.destDir = opts.destDir;
   this.buildDestination = path.join(opts.destDir, opts.repoName);
   this.git = opts.git;
   this.bundler = opts.bundler;
@@ -135,7 +136,7 @@ SiteBuilder.prototype._buildJekyll = function() {
   return this.checkForFile('Gemfile')
     .then(function(usesBundler) { return that.updateBundle(usesBundler); })
     .then(function() { return that.checkForFile(exports.PAGES_CONFIG); })
-    .then(function(configExists) { return that.writeConfig(configExists); })
+    .then(function(fileExists) { return that.readOrWriteConfig(fileExists); })
     .then(function() { return that.jekyllBuild(); });
 };
 
@@ -184,16 +185,32 @@ SiteBuilder.prototype.updateBundle = function(usesBundler) {
   return this.spawn(this.bundler, ['install']);
 };
 
-SiteBuilder.prototype.writeConfig = function(configExists) {
+SiteBuilder.prototype._parseDestinationFromConfigData = function(configData) {
+  var baseurlMatch = configData.match(/^baseurl:(.+)$/m);
+  if (baseurlMatch === null) { return; }
+  var baseurl = baseurlMatch[1].trim();
+  if (baseurl !== '' && baseurl !== '/') {
+    this.buildDestination = path.join(this.destDir, baseurl);
+  }
+};
+
+SiteBuilder.prototype.readOrWriteConfig = function(configExists) {
+  var that = this;
+  var configPath = path.join(that.sitePath, exports.PAGES_CONFIG);
+
   if (configExists) {
     this.logger.log('using existing', exports.PAGES_CONFIG);
-    return;
+    return new Promise(function(resolve, reject) {
+      fs.readFile(configPath, 'utf8', function(err, data) {
+        if (err) { return reject(err); }
+        that._parseDestinationFromConfigData(data);
+        resolve();
+      });
+    });
   }
-  this.logger.log('generating', exports.PAGES_CONFIG);
 
-  var that = this;
+  this.logger.log('generating', exports.PAGES_CONFIG);
   return new Promise(function(resolve, reject) {
-    var configPath = path.join(that.sitePath, exports.PAGES_CONFIG);
     var content = 'baseurl: /' + that.repoName + '\n' +
       'asset_root: ' + exports.ASSET_ROOT + '\n';
     fs.writeFile(configPath, content, function(err) {
