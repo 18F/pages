@@ -72,7 +72,7 @@ describe('SiteBuilder', function() {
       });
     };
     removeFile(configYml)
-      .then(function() { removeFile(fileToDelete); })
+      .then(function() { return removeFile(fileToDelete); })
       .then(removeRepoDir)
       .then(done, done);
   });
