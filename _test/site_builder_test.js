@@ -93,9 +93,9 @@ describe('SiteBuilder', function() {
     });
   };
 
-  var createRepoWithFile = function(filename, done) {
+  var createRepoWithFile = function(filename, contents, done) {
     fileToDelete = filename;
-    createRepoDir(function() { fs.writeFile(filename, '', done); });
+    createRepoDir(function() { fs.writeFile(filename, contents, done); });
   };
 
   var makeBuilder = function(sitePath, done) {
@@ -128,7 +128,7 @@ describe('SiteBuilder', function() {
 
     var writeConfig = function() {
       var configExists;
-      return builder.writeConfig(configExists = false);
+      return builder.readOrWriteConfig(configExists = false);
     };
 
     var readConfig = function() {
@@ -219,7 +219,7 @@ describe('SiteBuilder', function() {
       'generating', siteBuilder.PAGES_CONFIG);
     logMock.expects('log').withExactArgs(
       'removing generated', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(gemfile, function() {
+    createRepoWithFile(gemfile, '', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
@@ -240,7 +240,7 @@ describe('SiteBuilder', function() {
     mySpawn.sequence.add(mySpawn.simple(0));
     mySpawn.sequence.add(mySpawn.simple(1));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithFile(gemfile, function() {
+    createRepoWithFile(gemfile, '', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var bundleInstallCommand = 'bundle install';
         expect(err).to.equal('Error: rebuild failed for repo_name with ' +
@@ -263,7 +263,7 @@ describe('SiteBuilder', function() {
       'generating', siteBuilder.PAGES_CONFIG);
     logMock.expects('log').withExactArgs(
       'removing generated', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(gemfile, function() {
+    createRepoWithFile(gemfile, '', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         var jekyllBuildCommand =
           'bundle exec jekyll build --trace --destination dest_dir/repo_name ' +
@@ -278,12 +278,12 @@ describe('SiteBuilder', function() {
     });
   });
 
-  it('should not generate _config_18f_pages.yml if present', function(done) {
+  it('should use existing _config_18f_pages.yml if present', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
     logMock.expects('log').withExactArgs(
       'using existing', siteBuilder.PAGES_CONFIG);
-    createRepoWithFile(pagesConfig, function() {
+    createRepoWithFile(pagesConfig, '', function() {
       builder = makeBuilder(testRepoDir, check(done, function(err) {
         expect(err).to.be.undefined;
         expect(spawnCalls()).to.eql([
@@ -298,10 +298,30 @@ describe('SiteBuilder', function() {
     });
   });
 
+  it('should use baseurl from _config_18f_pages.yml as dest', function(done) {
+    mySpawn.setDefault(mySpawn.simple(0));
+    logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
+    logMock.expects('log').withExactArgs(
+      'using existing', siteBuilder.PAGES_CONFIG);
+    createRepoWithFile(pagesConfig, 'baseurl: /new-destination', function() {
+      builder = makeBuilder(testRepoDir, check(done, function(err) {
+        expect(err).to.be.undefined;
+        expect(spawnCalls()).to.eql([
+          'git stash',
+          'git pull',
+          'jekyll build --trace --destination dest_dir/new-destination ' +
+            '--config _config.yml,_config_18f_pages.yml',
+        ]);
+        logMock.verify();
+      }));
+      builder.build();
+    });
+  });
+
   it('should use rsync if _config.yml is not present', function(done) {
     mySpawn.setDefault(mySpawn.simple(0));
     logMock.expects('log').withExactArgs('syncing repo:', 'repo_name');
-    createRepoWithFile(pagesConfig, function() {
+    createRepoWithFile(pagesConfig, '', function() {
       removeFile(configYml)
         .then(function() {
           builder = makeBuilder(testRepoDir, check(done, function(err) {
