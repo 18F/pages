@@ -3,7 +3,9 @@
 [18F Pages](https://pages.18f.gov/) is the platform that
 [18F](https://18f.gsa.gov/) uses to prototype and publish many of its
 [Jekyll](http://jekyllrb.com/)-based web sites. It works very similarly to
-[GitHub pages](https://pages.github.com/).
+[GitHub pages](https://pages.github.com/). It also supports publishing any
+`18f-pages` branch within a repository using `rsync` if the branch does
+not contain a Jekyll-based site.
 
 This repo contains both the Jekyll source for https://pages.18f.gov/ and the
 [`pages.js`](./pages.js) server that acts as the publishing mechanism.
@@ -14,6 +16,12 @@ The server may be forked and used by other organizations, as it is completely
 configurable via the [`pages-config.json`](#pages-config) file. You may imagine
 replacing all instances of "18F" in the instructions that follow with your own
 organization's handle.
+
+Also, you will need to configure a GitHub webhook for `https://PAGES_HOST/deploy`,
+where `PAGES_HOST` is the hostname for your organization's instance of the pages
+server. This webhook can be configure per-repository, or for an entire GitHub
+organization. See the [18F Guides Template webhook setup instructions](https://pages.18f.gov/guides-template/post-your-guide/#set-webhook)
+for an example.
 
 ### Publishing to `pages.18f.gov`
 
@@ -34,7 +42,6 @@ The one condition test: "Is this site going to be for public (non-18F) consumpti
 
 In a nutshell, for each site repo:
 
-- In `_config.yml`, set `baseurl:` to `/$REPO-NAME`.
 - Create an `18f-pages` branch. If you already have a `gh-pages` branch, you
   can do this on the command line via:
 ```
@@ -44,7 +51,6 @@ $ git push origin 18f-pages
 - If your repo is primarily a Jekyll site (as opposed to a project site with
   an `18f-pages` branch for documentation), you may optionally set the default
   branch on GitHub to `18f-pages`.
-- Set a webhook for `https://pages.18f.gov/deploy`.  When doing this using the [repo settings on github.com](https://github.com/18F/THE-NAME-OF-YOUR-REPO/settings/hooks/new), `https://pages.18f.gov/deploy` should be used for the Payload URL and the rest of the fields can stay with their defaults. 
 - Push a change to the `18f-pages` branch to publish your site.
 - _Optional_: Add your site's `title:` and `url:` (relative to
   `https://pages.18f.gov`, e.g. `/guides`) to the `sites:` list at the top of
@@ -61,6 +67,14 @@ Any changes pushed to a `18f-pages-staging` branch will appear on
 `https://pages-staging.18f.gov`, which requires authenticated access.
 
 ### Administering `pages.18f.gov`
+
+#### GitHub 18F organization webhook
+
+There is an organization-wide webhook configured for the 18F GitHub
+that will send push notifications from every 18F GitHub repository
+to `https://pages.18f.gov/deploy`. This enables every update to an
+`18f-pages` branch in every 18F GitHub repository to automatically
+publish to `https://pages.18f.gov/`.
 
 #### Starting the webhook daemon
 
