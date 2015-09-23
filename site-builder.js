@@ -247,7 +247,8 @@ exports.launchBuilder = function (info, builderOpts) {
 
   var lockfilePath = path.join(builderOpts.destDir,
     '.update-lock-' + builderOpts.repoName);
-  var updateLock = new fileLockedOperation.FileLockedOperation(lockfilePath);
+  var updateLock = new fileLockedOperation.FileLockedOperation(lockfilePath,
+    { wait: config.fileLockWaitTime, poll: config.fileLockPollTime });
   var builder = new SiteBuilder(builderOpts, logger, updateLock, function(err) {
     if (err !== undefined) {
       logger.error(err);
@@ -258,8 +259,7 @@ exports.launchBuilder = function (info, builderOpts) {
 
     // Provides https://pages.18f.gov/REPO-NAME/build.log as an indicator of
     // latest status.
-    var newLogPath = path.join(
-      builderOpts.destDir, builderOpts.repoName, 'build.log');
+    var newLogPath = path.join(builder.buildDestination, 'build.log');
     fs.rename(buildLog, newLogPath, function(err) {
       if (err !== null) {
         console.error('Error moving build log from', buildLog, 'to',
