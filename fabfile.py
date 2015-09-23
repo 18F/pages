@@ -8,13 +8,13 @@ PAGES_DIR = "pages"
 CMD = "pages.js"
 
 def start():
-  with fabric.api.cd("pages"):
+  with fabric.api.cd(PAGES_DIR):
     fabric.api.run("forever start -l $HOME/pages.log -a %s" % CMD)
 
 def stop():
-  with fabric.api.cd("pages"):
+  with fabric.api.cd(PAGES_DIR):
     fabric.api.run("forever stop %s" % CMD)
 
 def restart():
-  with fabric.api.cd("pages"):
+  with fabric.api.cd(PAGES_DIR):
     fabric.api.run("forever restart %s" % CMD)
