@@ -27,13 +27,13 @@ function SiteBuilderOptions(info, repoDir, destDir) {
     config.rsync, config.rsyncOpts);
 }
 
-var webhook = hookshot();
+var webhook = hookshot(null, null, jsonOptions);
 
 function makeBuilderListener(builderConfig) {
   webhook.on('refs/heads/' + builderConfig.branch, function(info) {
     siteBuilder.launchBuilder(info, new SiteBuilderOptions(
       info, builderConfig.repositoryDir, builderConfig.generatedSiteDir));
-  }, jsonOptions);
+  });
 }
 
 var numBuilders = config.builders.length;

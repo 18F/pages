@@ -30,5 +30,8 @@
     "mocha": "^2.2.5",
     "mock-spawn": "^0.2.6",
     "sinon": "^1.15.4"
+  },
+  "dependencies": {
+    "hookshot": "18f/hookshot#json-options"
   }
 }
