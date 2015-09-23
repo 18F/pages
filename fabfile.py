@@ -4,13 +4,17 @@ import fabric.api
 
 fabric.api.env.use_ssh_config = True
 fabric.api.env.hosts = ['18f-pages']
-CMD = "pages/pages.js"
+PAGES_DIR = "pages"
+CMD = "pages.js"
 
 def start():
-  fabric.api.run("forever start -l $HOME/pages.log -a %s" % CMD)
+  with fabric.api.cd(PAGES_DIR):
+    fabric.api.run("forever start -l $HOME/pages.log -a %s" % CMD)
 
 def stop():
-  fabric.api.run("forever stop %s" % CMD)
+  with fabric.api.cd(PAGES_DIR):
+    fabric.api.run("forever stop %s" % CMD)
 
 def restart():
-  fabric.api.run("forever restart %s" % CMD)
+  with fabric.api.cd(PAGES_DIR):
+    fabric.api.run("forever restart %s" % CMD)
