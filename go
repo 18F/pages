@@ -6,7 +6,7 @@ Dir.chdir File.dirname(__FILE__)
 
 def try_command_and_restart(command)
   exit $CHILD_STATUS.exitstatus unless system command
-  exec RbConfig.ruby, *[$PROGRAM_NAME].concat(ARGV)
+  exec({ 'RUBYOPT' => nil }, RbConfig.ruby, *[$PROGRAM_NAME].concat(ARGV))
 end
 
 begin
@@ -24,6 +24,8 @@ rescue LoadError
   abort "Please add \"gem 'go_script'\" to your Gemfile"
 end
 
+require 'guides_style_18f'
+
 extend GoScript
 check_ruby_version '2.2.3'
 
@@ -33,24 +35,12 @@ def_command :init, 'Set up the development environment' do
   update_node_modules
 end
 
-def_command :update_js, 'Update JavaScript components' do
-  update_node_modules
-end
-
 def_command :update_theme, 'Update the guides_style_18f gem' do
-  exec({ 'RUBYOPT' => nil }, 'bundle', *%w(update --source guides_style_18f))
+  GuidesStyle18F.update_theme
 end
 
 def_command :update_gems, 'Update Ruby gems' do |gems|
   update_gems gems
-end
-
-def_command :test, 'Execute automated tests' do
-  exec_cmd 'gulp test'
-end
-
-def_command :lint, 'Run style-checking tools' do
-  exec_cmd 'gulp lint'
 end
 
 def_command :serve, 'Serve the site at localhost:4000' do
