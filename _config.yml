@@ -14,15 +14,34 @@ exclude:
 - package.json
 
 navigation:
-- text: GitHub Repository
-  url: https://github.com/18F/pages/
+- text: Introduction
+  url:
+  internal: true
+  children:
+  - text: 18F/pages GitHub Repository
+    url: https://github.com/18F/pages/
+    internal: false
+- text: 18f-pages-server
+  url: https://www.npmjs.com/package/18f-pages-server
   internal: false
+  children:
+  - text: 18F/pages-server GitHub Repository
+    url: https://github.com/18F/pages-server/
+    internal: false
 - text: 18F Guides
   url: guides
   internal: true
+  children:
+  - text: 18F/guides GitHub Repository
+    url: https://github.com/18F/guides/
+    internal: false
 - text: Guides Template
   url: guides-template
   internal: true
+  children:
+  - text: 18F/guides-template GitHub Repository
+    url: https://github.com/18F/guides-template/
+    internal: false
 
 google_analytics_ua: UA-48605964-19
 

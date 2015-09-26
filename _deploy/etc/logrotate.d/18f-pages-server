@@ -1,0 +1,10 @@
+/var/log/18f-pages-server/pages.log {
+  rotate 12
+  monthly
+  compress
+  missingok
+  notifempty
+  postrotate
+    /usr/local/bin/forever restart /usr/local/bin/18f-pages
+  endscript
+}
