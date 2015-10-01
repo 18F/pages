@@ -1,10 +1,11 @@
+# Note that copytruncate isn't a perfect solution, but it'll suffice for the
+# 18f-pages-server. For more information:
+# https://github.com/foreverjs/forever/issues/106#issuecomment-116933382
 /var/log/18f-pages-server/pages.log {
   rotate 12
   monthly
   compress
   missingok
   notifempty
-  postrotate
-    /usr/local/bin/forever restart /usr/local/bin/18f-pages
-  endscript
+  copytruncate
 }
