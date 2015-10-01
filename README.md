@@ -121,7 +121,7 @@ Once the server is installed, clone the 18F/pages repository and run the server 
 
 ```sh
 $ git clone git@github.com:18F/pages.git /home/ubuntu/pages
-$ forever -l /var/log/18f-pages-server/pages.log -a /usr/local/bin/18f-pages /home/ubuntu/pages/pages-config.json
+$ forever start -l /var/log/18f-pages-server/pages.log -a /usr/local/bin/18f-pages /home/ubuntu/pages/pages-config.json
 ```
 
 ### Upgrading the server
