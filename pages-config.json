@@ -5,7 +5,9 @@
   "bundler":          "/usr/local/rbenv/shims/bundle",
   "jekyll":           "/usr/local/rbenv/shims/jekyll",
   "rsync":            "/usr/bin/rsync",
-  "rsyncOpts":        ["-vaxp", "--delete", "--ignore-errors"],
+  "rsyncOpts":        [
+    "-vaxp", "--delete", "--ignore-errors", "--exclude=.[A-Za-z0-9]*"
+  ],
   "payloadLimit":     1048576,
   "githubOrg":        "18F",
   "pagesConfig":      "_config_18f_pages.yml",
