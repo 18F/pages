@@ -18,7 +18,8 @@
     {
       "branch":           "18f-pages",
       "repositoryDir":    "pages-repos",
-      "generatedSiteDir": "pages-generated"
+      "generatedSiteDir": "pages-generated",
+      "internalSiteDir":  "pages-internal"
     },
     {
       "branch":           "18f-pages-staging",
