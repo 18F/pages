@@ -14,12 +14,10 @@ Octokit.auto_paginate = true
 client = Octokit::Client.new access_token: access_token
 repos = client.org_repos '18F'
 
-pages_repos = []
-
-repos.each do |repo|
+pages_repos = repos.map do |repo|
   repo_name = repo.full_name
   branches = client.branches(repo_name).map { |b| b.name }
-  pages_repos << repo_name if branches.include? '18f-pages'
-end
+  repo_name if branches.include? '18f-pages'
+end.compact.sort
 
-pages_repos.sort.each { |repo| puts repo }
+pages_repos.each { |repo| puts repo }
