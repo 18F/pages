@@ -1,0 +1,5 @@
+language: ruby
+sudo: false
+script: ./go build
+rvm:
+- 2.2.3
