@@ -8,28 +8,30 @@ sites:
   url: /fbopen
 ---
 <h1>Introduction</h1>
-<p>This is the home for <a href="http://jekyllrb.com/">Jekyll</a>-based websites published by <a href="https://18f.gsa.gov/">18F</a>.</p>
+<p><a href="https://github.com/18F/pages">18F Pages</a> is <a href="https://18f.gsa.gov/">18F</a>'s serving host and publishing platform for <a href="http://jekyllrb.com/">Jekyll</a>-based websites.</p>
 
-<h2>18f-pages-server</h2>
+<h2>Read sites made with 18F Pages</h2>
 
-<p>The <a href="https://www.npmjs.com/package/18f-pages-server">18f-pages-server npm</a> is the publishing mechanism for this website.</p>
-
-<h2>18F Guides</h2>
+<h3>18F Guides</h3>
 
 <p>Our collection of <a href="/guides/">best practices guides</a>.</p>
 
-<h2>Guides Template</h2>
-
-<p>A <a href="/guides-template/">template for 18F Guides sites</a> that is also a complete 18F Guides publishing tutorial.</p>
-
-<h2>18F Slides</h2>
+<h3>18F Slides</h3>
 
 <p>Host slide decks like this <a href="https://pages.18f.gov/slides/sample/#/">example</a> from the <a href="https://github.com/18F/slides">18F Slides repo</a> on GitHub.</p>
 
-<h2>Other Sites</h2>
+<h3>Other 18F Pages sites</h3>
 
 <p>Other sites published here include:</p>
 
 <ul>{% for s in page.sites %}
 <li><a href="{{ s.url }}">{{ s.title }}</a></li>
 {% endfor %}</ul>
+
+<h2>How 18F Pages works</h2>
+
+<p>The <a href="https://www.npmjs.com/package/18f-pages-server">18f-pages-server npm</a> is the publishing mechanism for this website. See also the <a href="https://github.com/18F/pages">18F Pages readme</a>. The server may be reused by other organizations, as it is completely configurable.</p>
+
+<h2>How to create and update 18F Guides</h2>
+
+<p>To make a new guide, see <a href="/guides-template/"><b>guides-template</b></a> for how to clone the template. This also contains a tutorial for how to set up a new guide and modify existing guides.</p>
