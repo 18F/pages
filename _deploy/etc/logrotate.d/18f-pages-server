@@ -1,6 +1,6 @@
 # Note that copytruncate isn't a perfect solution, but it'll suffice for the
 # 18f-pages-server. For more information:
-# https://github.com/foreverjs/forever/issues/106#issuecomment-116933382
+# http://mark.stosberg.com/blog/tech/possible-solutions-to-empty-files-after-log-rotation/
 /var/log/18f-pages-server/pages.log {
   rotate 12
   monthly
